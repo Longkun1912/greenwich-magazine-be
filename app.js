@@ -49,7 +49,7 @@ mongoose
           migrationName,
         });
         if (!existingMigration) {
-          const migration = require(`./migrations/${file}`);
+          const migration = require(`./src/migrations/${file}`);
           await migration();
           console.log(`Migration ${file} executed successfully`);
           await new migrationTracker({ migrationName }).save();
