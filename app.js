@@ -75,7 +75,7 @@ require("./src/routes/user.routes")(app);
 
 //faculty
 require("./src/routes/faculty.routes")(app);
-
+require("./src/routes/contribution.routes")(app);
 // Default route
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Greenwich Magazine." });

@@ -32,9 +32,37 @@ async function uploadUserAvatarToCloudinary(buffer, email) {
     throw error;
   }
 }
+async function uploadContributionImageToCloudinary(buffer, title) {
+  try {
+    if (!title) {
+      throw new Error("Title is required");
+    }
+
+    if (!buffer) {
+      throw new Error("Buffer is required");
+    }
+
+    let dataURL = bufferToDataURL(buffer);
+
+    const uploadOptions = {
+      folder: "greenwich-magazine/contributions",
+      public_id: title,
+      resource_type: "auto",
+    };
+
+    const uploadResult = await cloudinary.uploader.upload(
+      dataURL,
+      uploadOptions
+    );
+    return uploadResult.url;
+  } catch (error) {
+    throw error;
+  }
+}
 
 const cloudinaryService = {
   uploadUserAvatarToCloudinary,
+  uploadContributionImageToCloudinary,
 };
 
 module.exports = cloudinaryService;
