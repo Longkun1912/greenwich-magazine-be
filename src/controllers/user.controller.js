@@ -19,6 +19,11 @@ exports.viewUsers = async (req, res) => {
   res.status(200).json(users);
 };
 
+exports.editUser = (req, res) => {
+  UserService.editUser(req.body, req.file);
+  res.status(200).send("Edit User Content successfully.");
+};
+
 exports.managerBoard = (req, res) => {
   res.status(200).send("Manager Content.");
 };

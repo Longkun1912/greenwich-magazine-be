@@ -70,10 +70,10 @@ const Faculty = require("./src/models/faculty");
 const User = require("./src/models/user");
 const Contribution = require("./src/models/contribution");
 const Event = require("./src/models/event");
+
 require("./src/routes/auth.routes")(app);
 require("./src/routes/user.routes")(app);
-
-//faculty
+require("./src/routes/role.routes")(app);
 require("./src/routes/faculty.routes")(app);
 require("./src/routes/contribution.routes")(app);
 // Default route

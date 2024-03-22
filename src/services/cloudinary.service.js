@@ -32,6 +32,18 @@ async function uploadUserAvatarToCloudinary(buffer, email) {
     throw error;
   }
 }
+
+async function deleteUserImageFromCloudinary(title) {
+  try {
+    if (!title) {
+      throw new Error("Title is required");
+    }
+    await cloudinary.uploader.destroy("greenwich-magazine/users/" + title);
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function uploadContributionImageToCloudinary(buffer, title) {
   try {
     if (!title) {
