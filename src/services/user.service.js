@@ -1,6 +1,8 @@
 var bcrypt = require("bcryptjs");
+const RoleService = require("../services/role.service");
+const FacultyService = require("../services/faculty.service");
 const User = require("../models/user");
-const Role = require("../models/role");
+const cloudinaryService = require("../services/cloudinary.service");
 
 const UserService = {
   async createUser(userForm, avatar_image) {
@@ -56,28 +58,37 @@ const UserService = {
   },
 
   async editUser(userForm, avatar_image) {
-    const user = await User.findById(userForm.id);
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (avatar_image) {
-      await cloudinaryService.deleteUserImageFromCloudinary(user.email);
-      const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-        avatar_image.buffer,
-        user.email
-      );
-      user.avatar = avatarName;
-    }
-
-    user.username = userForm.username;
-    user.mobile = userForm.mobile;
-    user.password = bcrypt.hashSync(userForm.password);
-    user.role = userForm.role;
-    user.faculty = userForm.faculty;
-
     try {
+      const user = await User.findById(userForm.id);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (avatar_image) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar_image.buffer,
+          user.email
+        );
+        user.avatar = avatarName;
+      }
+
+      user.username = userForm.username;
+      user.mobile = userForm.mobile;
+      user.password = bcrypt.hashSync(userForm.password);
+
+      const [role, faculty] = await Promise.all([
+        RoleService.findRoleByName(userForm.role),
+        FacultyService.findFacultyByName(userForm.faculty),
+      ]);
+
+      user.role = role;
+      user.faculty = faculty;
+
+      console.log("User role:", user.role);
+      console.log("User faculty:", user.faculty);
+
       return await user.save();
     } catch (error) {
       throw new Error(error);

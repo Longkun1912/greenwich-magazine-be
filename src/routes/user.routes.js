@@ -41,6 +41,13 @@ module.exports = function (app) {
     controller.createUser
   );
 
+  app.put(
+    "/api/user-management/user",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    upload.single("avatar_image"),
+    controller.editUser
+  );
+
   // Manager only
   app.get(
     "/api/test/manager",

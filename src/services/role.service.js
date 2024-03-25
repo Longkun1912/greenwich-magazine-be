@@ -9,6 +9,16 @@ const RoleService = {
       throw new Error(error);
     }
   },
+
+  async findRoleByName(name) {
+    try {
+      return await Role.findOne({
+        name: name,
+      });
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
 };
 
 module.exports = RoleService;

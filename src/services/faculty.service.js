@@ -86,6 +86,17 @@ const facultyService = {
       throw error;
     }
   },
+
+  async findFacultyByName(name) {
+    try {
+      return await Faculty.findOne({
+        name: name,
+      });
+    } catch (error) {
+      console.error("Error finding faculty by name:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = facultyService;

@@ -75,6 +75,7 @@ async function uploadContributionImageToCloudinary(buffer, title) {
 const cloudinaryService = {
   uploadUserAvatarToCloudinary,
   uploadContributionImageToCloudinary,
+  deleteUserImageFromCloudinary,
 };
 
 module.exports = cloudinaryService;
