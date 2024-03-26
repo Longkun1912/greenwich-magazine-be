@@ -48,6 +48,12 @@ module.exports = function (app) {
     controller.editUser
   );
 
+  app.delete(
+    "/api/user-management/user/:id",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.deleteUser
+  );
+
   // Manager only
   app.get(
     "/api/test/manager",

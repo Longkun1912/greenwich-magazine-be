@@ -24,6 +24,11 @@ exports.editUser = (req, res) => {
   res.status(200).send("Edit User Content successfully.");
 };
 
+exports.deleteUser = (req, res) => {
+  UserService.deleteUser(req.params.id);
+  res.status(200).send("Delete User Content successfully.");
+};
+
 exports.managerBoard = (req, res) => {
   res.status(200).send("Manager Content.");
 };

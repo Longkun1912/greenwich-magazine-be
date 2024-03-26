@@ -8,8 +8,8 @@ var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 
 exports.register = async (req, res) => {
+  console.log("File: " + req.file);
   const avatarFile = req.file;
-  console.log(avatarFile);
   const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
     avatarFile.buffer,
     req.body.email

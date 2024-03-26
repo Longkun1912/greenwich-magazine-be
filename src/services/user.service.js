@@ -86,10 +86,25 @@ const UserService = {
       user.role = role;
       user.faculty = faculty;
 
-      console.log("User role:", user.role);
-      console.log("User faculty:", user.faculty);
-
       return await user.save();
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
+  async deleteUser(userId) {
+    console.log("User ID: " + userId);
+    try {
+      const user = await User.findById(userId);
+      console.log("User: " + user.email);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+
+      return await User.findByIdAndDelete(userId);
     } catch (error) {
       throw new Error(error);
     }
