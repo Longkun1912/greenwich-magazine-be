@@ -12,10 +12,8 @@ const contributionService = {
         event: contributionForm.event,
       });
 
-      const imageFile = files["imageFile"] ? files["imageFile"][0] : null;
-      const documentFile = files["documentFile"]
-        ? files["documentFile"][0]
-        : null;
+      const imageFile = files["image"] ? files["image"][0] : null;
+      const documentFile = files["document"] ? files["document"][0] : null;
 
       if (imageFile) {
         const imageName =
@@ -27,6 +25,8 @@ const contributionService = {
       } else {
         contribution.image = null;
       }
+
+      console.log("Document file:", documentFile);
 
       if (documentFile) {
         const documentName =

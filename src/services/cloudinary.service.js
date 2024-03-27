@@ -1,4 +1,5 @@
 const cloudinary = require("../config/cloudinary.config");
+const fs = require("fs");
 
 const bufferToDataURL = (buffer) => {
   let base64 = buffer.toString("base64");
@@ -88,13 +89,18 @@ async function uploadContributionDocumentToCloudinary(buffer, title) {
       resouce_type: "raw", // Specify resource type as "raw" for Word files
     };
 
-    const uploadResult = await cloudinary.uploader.upload(
-      buffer,
-      uploadOptions
-    );
+    const uploadResult = await cloudinary.uploader
+      .upload_stream(uploadOptions, (error, result) => {
+        if (error) {
+          throw new Error(error.message || "Failed to upload to Cloudinary");
+        }
+        return result;
+      })
+      .end(buffer);
 
     return uploadResult.url;
   } catch (error) {
+    console.log("Error uploading document: ", error);
     throw error;
   }
 }

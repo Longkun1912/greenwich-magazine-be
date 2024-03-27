@@ -15,15 +15,16 @@ module.exports = function (app) {
 
   app.get(
     "/api/contribution-management/contribution",
+    [authJwt.verifyToken, authJwt.isAdmin],
     controller.getAllContributions
   );
 
   app.post(
     "/api/contribution-management/contribution",
-    [authJwt.verifyToken, authJwt.isStudent],
+    [authJwt.verifyToken, authJwt.isAdmin],
     upload.fields([
-      { name: "imageFile", maxCount: 1 },
-      { name: "documentFile", maxCount: 1 },
+      { name: "image", maxCount: 1 },
+      { name: "document", maxCount: 1 },
     ]),
     controller.createContribution
   );
