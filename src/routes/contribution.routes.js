@@ -1,5 +1,8 @@
 const { authJwt } = require("../middleware");
 const controller = require("../controllers/contribution.controller");
+const multer = require("multer");
+
+const upload = multer();
 
 module.exports = function (app) {
   app.use(function (req, res, next) {
@@ -10,11 +13,18 @@ module.exports = function (app) {
     next();
   });
 
-  app.get("/api/contribution-management/contribution", controller.getAllContributions);
+  app.get(
+    "/api/contribution-management/contribution",
+    controller.getAllContributions
+  );
 
   app.post(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isStudent],
+    upload.fields([
+      { name: "imageFile", maxCount: 1 },
+      { name: "documentFile", maxCount: 1 },
+    ]),
     controller.createContribution
   );
 

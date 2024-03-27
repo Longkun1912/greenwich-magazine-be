@@ -30,8 +30,8 @@ const UserService = {
       user.role = role;
       user.faculty = faculty;
 
-      console.log("New User: " + user);
-      return await user.save();
+      await user.save();
+      return user;
     } catch (error) {
       throw new Error(error);
     }
@@ -85,7 +85,10 @@ const UserService = {
 
       user.username = userForm.username;
       user.mobile = userForm.mobile;
-      user.password = bcrypt.hashSync(userForm.password);
+
+      if (userForm.password) {
+        user.password = bcrypt.hashSync(userForm.password);
+      }
 
       const [role, faculty] = await Promise.all([
         RoleService.findRoleByName(userForm.role),
@@ -111,7 +114,9 @@ const UserService = {
         throw new Error("User not found");
       }
 
-      await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+      if (user.avatar) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+      }
 
       return await User.findByIdAndDelete(userId);
     } catch (error) {

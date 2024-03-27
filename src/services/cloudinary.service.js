@@ -57,7 +57,7 @@ async function uploadContributionImageToCloudinary(buffer, title) {
     let dataURL = bufferToDataURL(buffer);
 
     const uploadOptions = {
-      folder: "greenwich-magazine/contributions",
+      folder: "greenwich-magazine/contributions/images",
       public_id: title,
       resource_type: "auto",
     };
@@ -72,10 +72,66 @@ async function uploadContributionImageToCloudinary(buffer, title) {
   }
 }
 
+async function uploadContributionDocumentToCloudinary(buffer, title) {
+  try {
+    if (!title) {
+      throw new Error("Title is required");
+    }
+
+    if (!buffer) {
+      throw new Error("Buffer is required");
+    }
+
+    const uploadOptions = {
+      folder: "greenwich-magazine/contributions/documents",
+      public_id: title,
+      resouce_type: "raw", // Specify resource type as "raw" for Word files
+    };
+
+    const uploadResult = await cloudinary.uploader.upload(
+      buffer,
+      uploadOptions
+    );
+
+    return uploadResult.url;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const deleteContributionImageFromCloudinary = async (title) => {
+  try {
+    if (!title) {
+      throw new Error("Title is required");
+    }
+    await cloudinary.uploader.destroy(
+      "greenwich-magazine/contributions/images/" + title
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+async function deleteContributionDocumentFromCloudinary(title) {
+  try {
+    if (!title) {
+      throw new Error("Title is required");
+    }
+    await cloudinary.uploader.destroy(
+      "greenwich-magazine/contributions/documents/" + title
+    );
+  } catch (error) {
+    throw error;
+  }
+}
+
 const cloudinaryService = {
   uploadUserAvatarToCloudinary,
   uploadContributionImageToCloudinary,
+  uploadContributionDocumentToCloudinary,
   deleteUserImageFromCloudinary,
+  deleteContributionImageFromCloudinary,
+  deleteContributionDocumentFromCloudinary,
 };
 
 module.exports = cloudinaryService;
