@@ -3,27 +3,38 @@ const User = require("../models/user");
 const Role = require("../models/role");
 const Faculty = require("../models/faculty");
 const cloudinaryService = require("../services/cloudinary.service");
+const duplicateEmailError = require("../errors/duplicate.email");
+const duplicateMobileError = require("../errors/duplicate.mobile");
 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 
 exports.register = async (req, res) => {
-  console.log("File: " + req.file);
-  const avatarFile = req.file;
-  const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-    avatarFile.buffer,
-    req.body.email
-  );
-
-  const user = new User({
-    username: req.body.username,
-    email: req.body.email,
-    avatar: avatarName,
-    mobile: req.body.mobile,
-    password: bcrypt.hashSync(req.body.password),
-  });
-
   try {
+    const avatarFile = req.file;
+    const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+      avatarFile.buffer,
+      req.body.email
+    );
+
+    const emailExist = await User.findOne({ email: req.body.email });
+    if (emailExist) {
+      throw new duplicateEmailError("This email is already taken");
+    }
+
+    const mobileExist = await User.findOne({ mobile: req.body.mobile });
+    if (mobileExist) {
+      throw new duplicateMobileError("This mobile is already taken");
+    }
+
+    const user = new User({
+      username: req.body.username,
+      email: req.body.email,
+      avatar: avatarName,
+      mobile: req.body.mobile,
+      password: bcrypt.hashSync(req.body.password),
+    });
+
     const studentRole = await Role.findOne({ name: "student" });
     if (!studentRole) {
       return res.status(400).send({ message: "Student role not found!" });
@@ -34,6 +45,12 @@ exports.register = async (req, res) => {
     res.send({ message: "User registered successfully!" });
   } catch (err) {
     console.error(err);
+    if (
+      err instanceof duplicateEmailError ||
+      err instanceof duplicateMobileError
+    ) {
+      return res.status(400).send({ message: err.message });
+    }
     res.status(500).send({ message: "Internal Server Error" });
   }
 };

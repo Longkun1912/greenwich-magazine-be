@@ -17,8 +17,8 @@ const UserService = {
       });
 
       // Check duplicate email
-      const userExist = await User.findOne({ email: userForm.email });
-      if (userExist) {
+      const emailExist = await User.findOne({ email: userForm.email });
+      if (emailExist) {
         throw new DuplicateEmailError("This email is already taken");
       }
 
