@@ -2,11 +2,13 @@ const Contribution = require("../models/contribution");
 const cloudinaryService = require("../services/cloudinary.service");
 const Event = require("../models/event");
 const User = require("../models/user");
+const { v4: uuidv4 } = require("uuid");
 
 const contributionService = {
   async createContribution(contributionForm, files) {
     try {
       const contribution = new Contribution({
+        _id: uuidv4(),
         title: contributionForm.title,
         content: contributionForm.content,
         status: contributionForm.status || "pending",
@@ -17,11 +19,13 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
+      const fileTitle = contribution._id;
+
       if (imageFile) {
         const imageName =
           await cloudinaryService.uploadContributionImageToCloudinary(
             imageFile.buffer,
-            contributionForm.title
+            fileTitle
           );
         contribution.image = imageName;
       }
@@ -30,7 +34,7 @@ const contributionService = {
         const documentName =
           await cloudinaryService.uploadContributionDocumentToCloudinary(
             documentFile.buffer,
-            contributionForm.title
+            fileTitle
           );
         contribution.document = documentName;
       }
@@ -79,8 +83,6 @@ const contributionService = {
         throw new Error("Contribution not found");
       }
 
-      const oldTitle = contribution.title;
-
       contribution.title = contributionForm.title;
       contribution.content = contributionForm.content;
       contribution.status = contributionForm.status || "pending";
@@ -89,7 +91,7 @@ const contributionService = {
 
       const event = await Event.findById(contributionForm.event);
       if (!event) {
-        throw new Error("Event not found");
+        return new Error("Event not found");
       }
 
       contribution.event = contributionForm.event;
@@ -99,21 +101,21 @@ const contributionService = {
 
       const handleFile = async (file, fileType) => {
         if (file) {
-          // Delete file with old name
+          // Delete old file
           if (contribution[fileType]) {
             await cloudinaryService[
               `deleteContribution${
                 fileType.charAt(0).toUpperCase() + fileType.slice(1)
               }FromCloudinary`
-            ](oldTitle);
+            ](contribution.id);
           }
 
-          // Upload file with new name
+          // Upload new file
           const fileName = await cloudinaryService[
             `uploadContribution${
               fileType.charAt(0).toUpperCase() + fileType.slice(1)
             }ToCloudinary`
-          ](file.buffer, contributionForm.title);
+          ](file.buffer, contribution.id);
           contribution[fileType] = fileName;
         }
       };
@@ -125,7 +127,7 @@ const contributionService = {
       return updatedContribution;
     } catch (error) {
       console.error("Error updating contribution:", error);
-      throw error;
+      return error;
     }
   },
 

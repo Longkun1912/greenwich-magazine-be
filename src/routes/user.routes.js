@@ -26,7 +26,7 @@ module.exports = function (app) {
 
   app.get(
     "/api/user-management/users",
-    [authJwt.verifyToken, authJwt.isAdmin],
+    [authJwt.verifyToken, authJwt.isAdminOrManager],
     controller.viewUsers
   );
 
@@ -43,7 +43,7 @@ module.exports = function (app) {
 
   app.put(
     "/api/user-management/user",
-    [authJwt.verifyToken, authJwt.isAdmin],
+    [authJwt.verifyToken, authJwt.isAdminOrManager],
     upload.single("avatar_image"),
     controller.editUser
   );

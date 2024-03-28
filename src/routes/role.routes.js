@@ -12,7 +12,7 @@ module.exports = function (app) {
 
   app.get(
     "/api/role-management/roles",
-    [authJwt.verifyToken, authJwt.isAdmin],
+    [authJwt.verifyToken, authJwt.isAdminOrManager],
     controller.viewRoles
   );
 };
