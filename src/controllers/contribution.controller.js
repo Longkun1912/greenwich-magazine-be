@@ -24,10 +24,10 @@ exports.getAllContributions = async (req, res) => {
 exports.updateContribution = async (req, res) => {
   try {
     const result = await contributionService.updateContribution(
-      req.params.id,
-      req.body
+      req.body,
+      req.files
     );
-    res.json(result);
+    res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

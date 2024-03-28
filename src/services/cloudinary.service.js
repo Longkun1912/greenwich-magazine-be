@@ -1,5 +1,4 @@
 const cloudinary = require("../config/cloudinary.config");
-const fs = require("fs");
 
 const bufferToDataURL = (buffer) => {
   let base64 = buffer.toString("base64");
@@ -67,6 +66,9 @@ async function uploadContributionImageToCloudinary(buffer, title) {
       dataURL,
       uploadOptions
     );
+
+    console.log("New updated image URL: " + uploadResult.url);
+
     return uploadResult.url;
   } catch (error) {
     throw error;
@@ -86,17 +88,31 @@ async function uploadContributionDocumentToCloudinary(buffer, title) {
     const uploadOptions = {
       folder: "greenwich-magazine/contributions/documents",
       public_id: title,
-      resouce_type: "raw", // Specify resource type as "raw" for Word files
+      resource_type: "raw",
     };
 
-    const uploadResult = await cloudinary.uploader
-      .upload_stream(uploadOptions, (error, result) => {
-        if (error) {
-          throw new Error(error.message || "Failed to upload to Cloudinary");
-        }
-        return result;
-      })
-      .end(buffer);
+    let uploadResult = null;
+
+    await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(uploadOptions, (error, result) => {
+          if (error) {
+            reject(
+              new Error(error.message || "Failed to upload to Cloudinary")
+            );
+            return;
+          }
+          uploadResult = result;
+          resolve();
+        })
+        .end(buffer);
+    });
+
+    if (!uploadResult || !uploadResult.url) {
+      throw new Error("Failed to get the URL from upload result");
+    }
+
+    console.log("New updated document URL: " + uploadResult.url);
 
     return uploadResult.url;
   } catch (error) {
@@ -110,6 +126,8 @@ const deleteContributionImageFromCloudinary = async (title) => {
     if (!title) {
       throw new Error("Title is required");
     }
+    console.log("Deleting image: " + title);
+
     await cloudinary.uploader.destroy(
       "greenwich-magazine/contributions/images/" + title
     );
@@ -123,8 +141,11 @@ async function deleteContributionDocumentFromCloudinary(title) {
     if (!title) {
       throw new Error("Title is required");
     }
-    await cloudinary.uploader.destroy(
-      "greenwich-magazine/contributions/documents/" + title
+    console.log("Deleting document: " + title);
+
+    await await cloudinary.uploader.destroy(
+      "greenwich-magazine/contributions/documents/" + title,
+      { resource_type: "raw" }
     );
   } catch (error) {
     throw error;

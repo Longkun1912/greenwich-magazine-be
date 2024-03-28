@@ -30,14 +30,18 @@ module.exports = function (app) {
   );
 
   app.put(
-    "/api/contribution-management/contribution/:id",
-    [authJwt.verifyToken, authJwt.isStudent],
+    "/api/contribution-management/contribution",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    upload.fields([
+      { name: "image", maxCount: 1 },
+      { name: "document", maxCount: 1 },
+    ]),
     controller.updateContribution
   );
 
   app.delete(
     "/api/contribution-management/contribution/:id",
-    [authJwt.verifyToken, authJwt.isStudent],
+    [authJwt.verifyToken, authJwt.isAdmin],
     controller.deleteContribution
   );
 };
