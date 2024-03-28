@@ -15,7 +15,7 @@ module.exports = function (app) {
 
   app.get(
     "/api/contribution-management/contribution",
-    [authJwt.verifyToken, authJwt.isAdmin],
+    [authJwt.verifyToken, authJwt.isAdminOrManager],
     controller.getAllContributions
   );
 
