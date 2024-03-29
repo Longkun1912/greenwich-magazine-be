@@ -85,7 +85,13 @@ const UserService = {
       const user = await User.findById(userForm.id);
 
       if (!user) {
-        throw new Error("User not found");
+        return new Error("User not found");
+      }
+
+      // Check duplicate mobile but not for the current user
+      const mobileExist = await User.findOne({ mobile: userForm.mobile });
+      if (mobileExist && mobileExist._id.toString() !== userForm.id) {
+        throw new DuplicateMobileError("This mobile is already taken");
       }
 
       if (avatar_image) {
@@ -114,7 +120,7 @@ const UserService = {
 
       return await user.save();
     } catch (error) {
-      throw new Error(error);
+      return new Error(error);
     }
   },
 

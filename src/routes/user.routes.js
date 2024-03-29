@@ -14,16 +14,6 @@ module.exports = function (app) {
     next();
   });
 
-  // All roles
-  app.get("/api/test/all", controller.allAccess);
-
-  // Admin only
-  app.get(
-    "/api/test/admin",
-    [authJwt.verifyToken, authJwt.isAdmin],
-    controller.adminBoard
-  );
-
   app.get(
     "/api/user-management/users",
     [authJwt.verifyToken, authJwt.isAdminOrManager],
@@ -52,33 +42,5 @@ module.exports = function (app) {
     "/api/user-management/user/:id",
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.deleteUser
-  );
-
-  // Manager only
-  app.get(
-    "/api/test/manager",
-    [authJwt.verifyToken, authJwt.isManager],
-    controller.managerBoard
-  );
-
-  // Coordinator only
-  app.get(
-    "/api/test/coordinator",
-    [authJwt.verifyToken, authJwt.isCoordinator],
-    controller.coordinatorBoard
-  );
-
-  // Student only
-  app.get(
-    "/api/test/student",
-    [authJwt.verifyToken, authJwt.isStudent],
-    controller.studentBoard
-  );
-
-  // Guest only
-  app.get(
-    "/api/test/guest",
-    [authJwt.verifyToken, authJwt.isGuest],
-    controller.guestBoard
   );
 };
