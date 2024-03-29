@@ -155,6 +155,30 @@ const contributionService = {
       throw error;
     }
   },
+  async viewAllContributionbyFaculty(facultyId) {
+    try {
+      const users = await User.find({ faculty: facultyId });
+      const userIds = users.map(user => user._id);
+      const contributions = await Contribution.find({ submitter: { $in: userIds } });
+        
+      return contributions;
+    } catch (error) {
+      console.error("Error fetching contributions by faculty:", error);
+      throw error;
+    }
+  },
+  async detailContribution(id) {
+    try {
+      const contribution = await Contribution.findById(id);
+      if (!contribution) {
+        throw new Error("Contribution not found");
+      }
+      return contribution;
+    } catch (error) {
+      console.error("Error fetching contribution details:", error);
+      throw error;
+    }
+  }
 };
 
 module.exports = contributionService;

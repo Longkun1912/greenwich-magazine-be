@@ -19,6 +19,17 @@ module.exports = function (app) {
     controller.getAllContributions
   );
 
+  app.get(
+    "/api/contribution-management/contribution/:id", 
+    [authJwt.verifyToken, authJwt.isManager],
+    controller.getContributionDetails
+  );
+
+  app.get("/api/contribution-manager/:facultyId",
+    [authJwt.verifyToken, authJwt.isStudent],
+    controller.viewAllContributionbyFaculty
+  );
+    
   app.post(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isAdmin],
