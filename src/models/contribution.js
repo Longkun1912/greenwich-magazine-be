@@ -20,7 +20,7 @@ const contributionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "modified"],
+      enum: ["pending", "approved", "rejected", "modified", "public"],
       default: "pending",
       required: true,
     },

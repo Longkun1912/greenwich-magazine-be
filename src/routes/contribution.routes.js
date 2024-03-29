@@ -25,11 +25,6 @@ module.exports = function (app) {
     controller.getContributionDetails
   );
 
-  app.get("/api/contribution-manager/:facultyId",
-    [authJwt.verifyToken, authJwt.isStudent],
-    controller.viewAllContributionbyFaculty
-  );
-    
   app.post(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isAdmin],
@@ -55,4 +50,27 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.deleteContribution
   );
+
+  // Guest
+  app.get('/api/guest/contribution',
+  [authJwt.verifyToken, authJwt.isGuest],
+  controller.getPublicContributions);
+
+  // Student
+  app.get("/api/student/:facultyId",
+    [authJwt.verifyToken, authJwt.isStudent],
+    controller.viewAllContributionbyFaculty
+  ); 
+  
+   app.post("/api/student/contribution/:idEvent", 
+   [authJwt.verifyToken, authJwt.isStudent],
+  controller.createContributionForStudent);
+
+  app.put("/api/student/contribution", 
+  [authJwt.verifyToken, authJwt.isStudent],
+  controller.updateContributionForStudent);
+
+  app.delete("/api/student/contribution/:id",
+  [authJwt.verifyToken, authJwt.isStudent],
+  controller.deleteContributionForStudent);
 };
