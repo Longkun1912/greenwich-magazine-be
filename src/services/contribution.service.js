@@ -75,8 +75,6 @@ const contributionService = {
   },
 
   async updateContribution(contributionForm, files) {
-    console.log("Updating contribution:", contributionForm);
-
     try {
       const contribution = await Contribution.findById(contributionForm.id);
       if (!contribution) {
@@ -87,14 +85,14 @@ const contributionService = {
       contribution.content = contributionForm.content;
       contribution.status = contributionForm.status || "pending";
 
-      console.log("Event:", contributionForm.event);
-
-      const event = await Event.findById(contributionForm.event);
-      if (!event) {
-        return new Error("Event not found");
+      if (contributionForm.event) {
+        const event = await Event.findById(contributionForm.event);
+        if (!event) {
+          throw new Error("Event not found");
+        } else {
+          contribution.event = contributionForm.event;
+        }
       }
-
-      contribution.event = contributionForm.event;
 
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
@@ -127,7 +125,7 @@ const contributionService = {
       return updatedContribution;
     } catch (error) {
       console.error("Error updating contribution:", error);
-      return error;
+      throw error;
     }
   },
 

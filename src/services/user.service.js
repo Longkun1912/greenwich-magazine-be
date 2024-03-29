@@ -28,14 +28,6 @@ const UserService = {
         throw new DuplicateMobileError("This mobile is already taken");
       }
 
-      if (avatar_image) {
-        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-          avatar_image.buffer,
-          userForm.email
-        );
-        user.avatar = avatarName;
-      }
-
       const [role, faculty] = await Promise.all([
         RoleService.findRoleByName(userForm.role),
         FacultyService.findFacultyByName(userForm.faculty),
@@ -44,10 +36,18 @@ const UserService = {
       user.role = role;
       user.faculty = faculty;
 
+      if (avatar_image) {
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar_image.buffer,
+          userForm.email
+        );
+        user.avatar = avatarName;
+      }
+
       await user.save();
       return user;
     } catch (error) {
-      return error;
+      throw new Error(error);
     }
   },
 
@@ -85,22 +85,13 @@ const UserService = {
       const user = await User.findById(userForm.id);
 
       if (!user) {
-        return new Error("User not found");
+        throw new Error("User not found");
       }
 
       // Check duplicate mobile but not for the current user
       const mobileExist = await User.findOne({ mobile: userForm.mobile });
       if (mobileExist && mobileExist._id.toString() !== userForm.id) {
         throw new DuplicateMobileError("This mobile is already taken");
-      }
-
-      if (avatar_image) {
-        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
-        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-          avatar_image.buffer,
-          user.email
-        );
-        user.avatar = avatarName;
       }
 
       user.username = userForm.username;
@@ -118,9 +109,18 @@ const UserService = {
       user.role = role;
       user.faculty = faculty;
 
+      if (avatar_image) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar_image.buffer,
+          user.email
+        );
+        user.avatar = avatarName;
+      }
+
       return await user.save();
     } catch (error) {
-      return new Error(error);
+      throw new Error(error);
     }
   },
 

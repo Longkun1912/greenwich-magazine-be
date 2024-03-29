@@ -5,20 +5,14 @@ const DuplicateMobileError = require("../errors/duplicate.mobile");
 
 exports.createUser = async (req, res) => {
   try {
-    const result = await UserService.createUser(req.body, req.file);
-
-    if (
-      result instanceof DuplicateEmailError ||
-      result instanceof DuplicateMobileError
-    ) {
-      res.status(400).json({ error: result.message });
-    } else if (result instanceof Error) {
-      res.status(500).json({ error: result.message });
-    } else {
-      res.status(200).send("Create user successfully.");
-    }
+    await UserService.createUser(req.body, req.file);
+    res.status(200).send("Create user successfully.");
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error instanceof DuplicateEmailError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
@@ -33,16 +27,14 @@ exports.viewUsers = async (req, res) => {
 
 exports.editUser = async (req, res) => {
   try {
-    const result = await UserService.editUser(req.body, req.file);
-    if (result instanceof DuplicateMobileError) {
-      res.status(400).json({ error: result.message });
-    } else if (result instanceof Error) {
-      res.status(500).json({ error: result.message });
-    } else {
-      res.status(200).send("Edit user successfully.");
-    }
+    await UserService.editUser(req.body, req.file);
+    res.status(200).send("Edit user successfully.");
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error instanceof DuplicateMobileError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
