@@ -4,22 +4,26 @@ const cloudinaryService = require("../services/cloudinary.service");
 const facultyService = {
   async createFaculty(facultyForm, imageFile) {
     try {
-      let imageName = null;
-
-      // Nếu có ảnh được tải lên, thực hiện upload lên Cloudinary
-      if (imageFile) {
-        imageName = await cloudinaryService.uploadImageToCloudinary(
-          imageFile.buffer,
-          facultyForm.name
-        );
-      }
-
       // Tạo faculty mới
       const faculty = new Faculty({
         name: facultyForm.name,
-        image: imageName, // Nếu không có ảnh, imageName sẽ là null
         description: facultyForm.description,
       });
+
+      const formattedImageName = facultyForm.name
+        .split(" ")
+        .join("")
+        .toLowerCase();
+
+      // Nếu có ảnh được tải lên, thực hiện upload lên Cloudinary
+      if (imageFile) {
+        const imageName =
+          await cloudinaryService.uploadFacultyImageToCloudinary(
+            imageFile.buffer,
+            formattedImageName
+          );
+        faculty.image = imageName;
+      }
 
       // Lưu faculty vào cơ sở dữ liệu
       const createdFaculty = await faculty.save();
@@ -41,12 +45,14 @@ const facultyService = {
   },
 
   // update Faculty
-  async updateFaculty(id, facultyForm) {
+  async updateFaculty(id, facultyForm, imageFile) {
     try {
       const faculty = await Faculty.findById(id);
       if (!faculty) {
         throw new Error("Faculty not found");
       }
+
+      const oldName = faculty.name;
 
       // Cập nhật thông tin của faculty
       if (facultyForm.name) {
@@ -55,12 +61,21 @@ const facultyService = {
       if (facultyForm.description) {
         faculty.description = facultyForm.description;
       }
+
+      const formattedImageName = facultyForm.name
+        .split(" ")
+        .join("")
+        .toLowerCase();
+
       // Kiểm tra và cập nhật ảnh nếu có
-      if (facultyForm.imageFile) {
-        const imageName = await cloudinaryService.uploadImageToCloudinary(
-          facultyForm.imageFile.buffer,
-          facultyForm.name
-        );
+      if (imageFile) {
+        await cloudinaryService.deleteFacultyImageFromCloudinary(oldName);
+
+        const imageName =
+          await cloudinaryService.uploadFacultyImageToCloudinary(
+            imageFile.buffer,
+            formattedImageName
+          );
         faculty.image = imageName;
       }
 
@@ -76,10 +91,19 @@ const facultyService = {
   // delete Faculty
   async deleteFaculty(id) {
     try {
-      const deletedFaculty = await Faculty.findByIdAndDelete(id);
-      if (!deletedFaculty) {
+      const faculty = await Faculty.findById(id);
+      if (!faculty) {
         throw new Error("Faculty not found");
       }
+
+      console.log("Image:", faculty.image);
+
+      if (faculty.image) {
+        await cloudinaryService.deleteFacultyImageFromCloudinary(faculty.name);
+      }
+
+      await Faculty.findByIdAndDelete(id);
+
       return { message: "Successfully deleted faculty" };
     } catch (error) {
       console.error("Error deleting faculty:", error);

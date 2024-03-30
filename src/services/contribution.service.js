@@ -133,17 +133,15 @@ const contributionService = {
     try {
       const contribution = await Contribution.findById(id);
 
-      console.log("Deleting contribution image:", contribution.title);
       if (contribution.image) {
         await cloudinaryService.deleteContributionImageFromCloudinary(
-          contribution.title
+          contribution.id
         );
       }
 
-      console.log("Deleting contribution document:", contribution.title);
       if (contribution.document) {
         await cloudinaryService.deleteContributionDocumentFromCloudinary(
-          contribution.title
+          contribution.id
         );
       }
 
@@ -158,9 +156,11 @@ const contributionService = {
   async viewAllContributionbyFaculty(facultyId) {
     try {
       const users = await User.find({ faculty: facultyId });
-      const userIds = users.map(user => user._id);
-      const contributions = await Contribution.find({ submitter: { $in: userIds } });
-        
+      const userIds = users.map((user) => user._id);
+      const contributions = await Contribution.find({
+        submitter: { $in: userIds },
+      });
+
       return contributions;
     } catch (error) {
       console.error("Error fetching contributions by faculty:", error);
@@ -190,67 +190,71 @@ const contributionService = {
   },
   async createContributionForStudent(contributionForm, files, idEvent) {
     try {
-        const event = await Event.findById(idEvent);
-        if (!event) {
-            throw new Error("Event not found");
-        }
-        const currentDate = new Date();
-        if (currentDate > new Date(event.firstDeadLineDate)) {
-            throw new Error("Contribution cannot be created after the first deadline");
-        }
-        const contribution = new Contribution({
-            _id: uuidv4(),
-            title: contributionForm.title,
-            content: contributionForm.content,
-            status: contributionForm.status || "pending",
-            submitter: contributionForm.submitter,
-            event: idEvent, 
-        });
+      const event = await Event.findById(idEvent);
+      if (!event) {
+        throw new Error("Event not found");
+      }
+      const currentDate = new Date();
+      if (currentDate > new Date(event.firstDeadLineDate)) {
+        throw new Error(
+          "Contribution cannot be created after the first deadline"
+        );
+      }
+      const contribution = new Contribution({
+        _id: uuidv4(),
+        title: contributionForm.title,
+        content: contributionForm.content,
+        status: contributionForm.status || "pending",
+        submitter: contributionForm.submitter,
+        event: idEvent,
+      });
 
-        const imageFile = files["image"] ? files["image"][0] : null;
-        const documentFile = files["document"] ? files["document"][0] : null;
+      const imageFile = files["image"] ? files["image"][0] : null;
+      const documentFile = files["document"] ? files["document"][0] : null;
 
-        const fileTitle = contribution._id;
+      const fileTitle = contribution._id;
 
-        if (imageFile) {
-            const imageName =
-                await cloudinaryService.uploadContributionImageToCloudinary(
-                    imageFile.buffer,
-                    fileTitle
-                );
-            contribution.image = imageName;
-        }
+      if (imageFile) {
+        const imageName =
+          await cloudinaryService.uploadContributionImageToCloudinary(
+            imageFile.buffer,
+            fileTitle
+          );
+        contribution.image = imageName;
+      }
 
-        if (documentFile) {
-            const documentName =
-                await cloudinaryService.uploadContributionDocumentToCloudinary(
-                    documentFile.buffer,
-                    fileTitle
-                );
-            contribution.document = documentName;
-        }
+      if (documentFile) {
+        const documentName =
+          await cloudinaryService.uploadContributionDocumentToCloudinary(
+            documentFile.buffer,
+            fileTitle
+          );
+        contribution.document = documentName;
+      }
 
-        const createdContribution = await contribution.save();
-        return createdContribution;
+      const createdContribution = await contribution.save();
+      return createdContribution;
     } catch (error) {
-        console.error("Error creating contribution:", error);
-        throw error;
+      console.error("Error creating contribution:", error);
+      throw error;
     }
-},
+  },
   async updateContributionForStudent(contributionForm, files) {
-  try {
+    try {
       const contribution = await Contribution.findById(contributionForm.id);
       if (!contribution) {
-          throw new Error("Contribution not found");
+        throw new Error("Contribution not found");
       }
       const event = await Event.findById(contribution.event);
       if (!event) {
-          throw new Error("Event not found");
+        throw new Error("Event not found");
       }
 
       const currentDate = new Date();
       if (currentDate > new Date(event.finalDeadLineDate)) {
-          throw new Error("Contribution cannot be updated after the final deadline");
+        throw new Error(
+          "Contribution cannot be updated after the final deadline"
+        );
       }
 
       // Cập nhật thông tin của contribution
@@ -260,24 +264,24 @@ const contributionService = {
 
       // Xử lý tệp đính kèm
       const handleFile = async (file, fileType) => {
-          if (file) {
-              // Xóa tệp đính kèm cũ (nếu có)
-              if (contribution[fileType]) {
-                  await cloudinaryService[
-                      `deleteContribution${
-                          fileType.charAt(0).toUpperCase() + fileType.slice(1)
-                      }FromCloudinary`
-                  ](contribution.id);
-              }
-
-              // Tải lên tệp đính kèm mới lên Cloudinary
-              const fileName = await cloudinaryService[
-                  `uploadContribution${
-                      fileType.charAt(0).toUpperCase() + fileType.slice(1)
-                  }ToCloudinary`
-              ](file.buffer, contribution.id);
-              contribution[fileType] = fileName;
+        if (file) {
+          // Xóa tệp đính kèm cũ (nếu có)
+          if (contribution[fileType]) {
+            await cloudinaryService[
+              `deleteContribution${
+                fileType.charAt(0).toUpperCase() + fileType.slice(1)
+              }FromCloudinary`
+            ](contribution.id);
           }
+
+          // Tải lên tệp đính kèm mới lên Cloudinary
+          const fileName = await cloudinaryService[
+            `uploadContribution${
+              fileType.charAt(0).toUpperCase() + fileType.slice(1)
+            }ToCloudinary`
+          ](file.buffer, contribution.id);
+          contribution[fileType] = fileName;
+        }
       };
 
       // Xử lý tệp ảnh và tệp tài liệu
@@ -290,66 +294,67 @@ const contributionService = {
       // Lưu lại thông tin của contribution
       const updatedContribution = await contribution.save();
       return updatedContribution;
-  } catch (error) {
+    } catch (error) {
       console.error("Error updating contribution:", error);
       throw error;
-  }
-},
+    }
+  },
   async deleteContributionForStudent(id) {
-  try {
+    try {
       const contribution = await Contribution.findById(id);
       if (!contribution) {
-          throw new Error("Contribution not found");
+        throw new Error("Contribution not found");
       }
 
       const event = await Event.findById(contribution.event);
       if (!event) {
-          throw new Error("Event not found");
+        throw new Error("Event not found");
       }
 
       const currentDate = new Date();
       if (currentDate > new Date(event.finalDeadLineDate)) {
-          throw new Error("Contribution cannot be deleted after the final deadline");
+        throw new Error(
+          "Contribution cannot be deleted after the final deadline"
+        );
       }
 
       console.log("Deleting contribution image:", contribution.title);
       if (contribution.image) {
-          await cloudinaryService.deleteContributionImageFromCloudinary(
-              contribution.title
-          );
+        await cloudinaryService.deleteContributionImageFromCloudinary(
+          contribution.title
+        );
       }
       console.log("Deleting contribution document:", contribution.title);
       if (contribution.document) {
-          await cloudinaryService.deleteContributionDocumentFromCloudinary(
-              contribution.title
-          );
+        await cloudinaryService.deleteContributionDocumentFromCloudinary(
+          contribution.title
+        );
       }
 
       await Contribution.findByIdAndDelete(id);
 
       return { message: "Successfully deleted contribution" };
-  } catch (error) {
+    } catch (error) {
       console.error("Error deleting contribution:", error);
       throw error;
-  }
-},
-
-async changeContributionStatus(contributionId, newStatus) {
-  console.log(contributionId);
-  try {
-    const contribution = await Contribution.findById(contributionId);
-    if (!contribution) {
-      throw new Error("Contribution not found");
     }
-    contribution.status = newStatus;
-    const updatedContribution = await contribution.save();
-    return updatedContribution;
-  } catch (error) {
-    console.error("Error changing contribution status:", error);
-    throw error;
-  }
-}
+  },
 
+  async changeContributionStatus(contributionId, newStatus) {
+    console.log(contributionId);
+    try {
+      const contribution = await Contribution.findById(contributionId);
+      if (!contribution) {
+        throw new Error("Contribution not found");
+      }
+      contribution.status = newStatus;
+      const updatedContribution = await contribution.save();
+      return updatedContribution;
+    } catch (error) {
+      console.error("Error changing contribution status:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = contributionService;

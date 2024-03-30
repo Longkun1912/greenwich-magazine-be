@@ -5,6 +5,7 @@ const bufferToDataURL = (buffer) => {
   return `data:image/jpeg;base64,${base64}`;
 };
 
+// Files related to user
 async function uploadUserAvatarToCloudinary(buffer, email) {
   try {
     if (!email) {
@@ -44,6 +45,7 @@ async function deleteUserImageFromCloudinary(title) {
   }
 }
 
+// Files related to contributions
 async function uploadContributionImageToCloudinary(buffer, title) {
   try {
     if (!title) {
@@ -143,7 +145,7 @@ async function deleteContributionDocumentFromCloudinary(title) {
     }
     console.log("Deleting document: " + title);
 
-    await await cloudinary.uploader.destroy(
+    await cloudinary.uploader.destroy(
       "greenwich-magazine/contributions/documents/" + title,
       { resource_type: "raw" }
     );
@@ -152,13 +154,64 @@ async function deleteContributionDocumentFromCloudinary(title) {
   }
 }
 
+// Files related to faculties
+async function uploadFacultyImageToCloudinary(buffer, name) {
+  try {
+    if (!name) {
+      throw new Error("Name is required");
+    }
+
+    if (!buffer) {
+      throw new Error("Buffer is required");
+    }
+
+    let dataURL = bufferToDataURL(buffer);
+
+    const uploadOptions = {
+      folder: "greenwich-magazine/faculties",
+      public_id: name,
+      resource_type: "auto",
+    };
+
+    const uploadResult = await cloudinary.uploader.upload(
+      dataURL,
+      uploadOptions
+    );
+    return uploadResult.url;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const deleteFacultyImageFromCloudinary = async (name) => {
+  try {
+    if (!name) {
+      throw new Error("Name is required");
+    }
+
+    const formatNameToPublicId = name.split(" ").join("").toLowerCase();
+
+    console.log("Deleting faculty image: " + formatNameToPublicId);
+
+    await cloudinary.uploader
+      .destroy("greenwich-magazine/faculties/" + formatNameToPublicId)
+      .then((result) => {
+        console.log(result);
+      });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const cloudinaryService = {
   uploadUserAvatarToCloudinary,
   uploadContributionImageToCloudinary,
   uploadContributionDocumentToCloudinary,
+  uploadFacultyImageToCloudinary,
   deleteUserImageFromCloudinary,
   deleteContributionImageFromCloudinary,
   deleteContributionDocumentFromCloudinary,
+  deleteFacultyImageFromCloudinary,
 };
 
 module.exports = cloudinaryService;
