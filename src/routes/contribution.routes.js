@@ -61,16 +61,29 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isStudent],
     controller.viewAllContributionbyFaculty
   ); 
-  
+
    app.post("/api/student/contribution/:idEvent", 
    [authJwt.verifyToken, authJwt.isStudent],
+       upload.fields([
+      { name: "image", maxCount: 1 },
+      { name: "document", maxCount: 1 },
+    ]),
   controller.createContributionForStudent);
 
   app.put("/api/student/contribution", 
   [authJwt.verifyToken, authJwt.isStudent],
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
   controller.updateContributionForStudent);
 
   app.delete("/api/student/contribution/:id",
   [authJwt.verifyToken, authJwt.isStudent],
   controller.deleteContributionForStudent);
+  
+  // Marketing Coordinator
+  app.put("/api/coordinator/contribution",
+  [authJwt.verifyToken, authJwt.isCoordinator],
+  controller.changeContributionStatus);
 };

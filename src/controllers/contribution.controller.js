@@ -91,4 +91,11 @@ exports.deleteContributionForStudent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+exports.changeContributionStatus = async (req, res) => {
+  try { 
+    const updatedContribution = await contributionService.changeContributionStatus(req.body.id, req.body.status);
+    res.status(200).json(updatedContribution); 
+  } catch (error) {
+    res.status(500).json({ error: error.message }); 
+  }
+};

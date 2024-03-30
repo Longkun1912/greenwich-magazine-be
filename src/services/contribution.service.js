@@ -332,7 +332,24 @@ const contributionService = {
       console.error("Error deleting contribution:", error);
       throw error;
   }
+},
+
+async changeContributionStatus(contributionId, newStatus) {
+  console.log(contributionId);
+  try {
+    const contribution = await Contribution.findById(contributionId);
+    if (!contribution) {
+      throw new Error("Contribution not found");
+    }
+    contribution.status = newStatus;
+    const updatedContribution = await contribution.save();
+    return updatedContribution;
+  } catch (error) {
+    console.error("Error changing contribution status:", error);
+    throw error;
+  }
 }
+
 };
 
 module.exports = contributionService;
