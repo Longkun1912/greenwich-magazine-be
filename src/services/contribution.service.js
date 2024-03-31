@@ -203,9 +203,20 @@ const contributionService = {
       throw error;
     }
   },
-  async createContributionForStudent(contributionForm, files, idEvent) {
+
+  async createContributionForStudent(contributionForm, files) {
     try {
-      const event = await Event.findById(idEvent);
+      const submitter = await User.findById(contributionForm.submitter);
+      if (!submitter) {
+        throw new Error("Submitter not found");
+      }
+
+      const faculty = await Faculty.findById(submitter.faculty);
+      if (!faculty) {
+        throw new Error("Faculty not found");
+      }
+
+      const event = await Event.findById(contributionForm.event);
       if (!event) {
         throw new Error("Event not found");
       }
@@ -216,13 +227,15 @@ const contributionService = {
           "Contribution cannot be created after the first deadline"
         );
       }
+
       const contribution = new Contribution({
         _id: uuidv4(),
         title: contributionForm.title,
         content: contributionForm.content,
         status: contributionForm.status || "pending",
         submitter: contributionForm.submitter,
-        event: idEvent,
+        faculty: faculty._id,
+        event: event._id,
       });
 
       const imageFile = files["image"] ? files["image"][0] : null;
@@ -255,6 +268,7 @@ const contributionService = {
       throw error;
     }
   },
+
   async updateContributionForStudent(contributionForm, files) {
     try {
       const contribution = await Contribution.findById(contributionForm.id);

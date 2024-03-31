@@ -71,14 +71,10 @@ exports.getPublicContributions = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.createContributionForStudent = async (req, res) => {
   try {
-    const idEvent = req.params.idEvent;
-    await contributionService.createContributionForStudent(
-      req.body,
-      req.files,
-      idEvent
-    );
+    await contributionService.createContributionForStudent(req.body, req.files);
     res.status(200).json("Create contribution successfully.");
   } catch (error) {
     res.status(500).json({ error: error.message });

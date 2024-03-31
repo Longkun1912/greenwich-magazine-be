@@ -66,7 +66,7 @@ module.exports = function (app) {
   );
 
   app.post(
-    "/api/student/contribution/:idEvent",
+    "/api/contribution-management/student/contribution",
     [authJwt.verifyToken, authJwt.isStudent],
     upload.fields([
       { name: "image", maxCount: 1 },
