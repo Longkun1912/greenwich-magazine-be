@@ -114,3 +114,14 @@ exports.changeContributionStatus = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+//viewAllContributionbyIdFaculty
+exports.viewAllContributionbyIdFaculty = async (req, res) => {
+  try {
+    const facultyId = req.params.facultyId; 
+    const contributions = await contributionService.viewAllContributionbyIdFaculty(facultyId);
+    res.json(contributions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

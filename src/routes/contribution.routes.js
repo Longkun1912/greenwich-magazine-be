@@ -92,6 +92,13 @@ module.exports = function (app) {
   );
 
   // Marketing Coordinator
+  //viewAllContributionbyIdFaculty
+  app.get(
+    "/api/contribution-management/coordinator/:facultyId",
+    [authJwt.verifyToken, authJwt.isCoordinator],
+    controller.viewAllContributionbyIdFaculty
+  );
+
   app.put(
     "/api/coordinator/contribution",
     [authJwt.verifyToken, authJwt.isCoordinator],

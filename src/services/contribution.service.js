@@ -385,6 +385,18 @@ const contributionService = {
       throw error;
     }
   },
+
+  //viewAllContributionbyIdFaculty
+  async viewAllContributionbyIdFaculty(facultyId) {
+    try {
+      const contributions = await Contribution.find({ faculty: facultyId });
+      return contributions;
+    } catch (error) {
+      console.error("Error fetching contributions by faculty:", error);
+      throw error;
+    }
+  }
+
 };
 
 module.exports = contributionService;
