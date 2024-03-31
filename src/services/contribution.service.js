@@ -169,20 +169,12 @@ const contributionService = {
 
   async viewAllContributionbyFaculty(userId) {
     try {
-      console.log("User ID: " + userId);
       const user = await User.findById(userId);
-      const faculty = user.faculty;
+      if (!user) {
+        throw new Error("User not found");
+      }
 
-      console.log("Faculty: " + faculty);
-
-      // Find all contribution in the faculty
-      const userIds = await User.find({ faculty: faculty }).select("_id");
-      const userIdsArray = userIds.map((userId) => userId._id);
-
-      const contributions = await Contribution.find({
-        submitter: { $in: userIdsArray },
-      });
-
+      const contributions = await Contribution.find({ faculty: user.faculty });
       return contributions;
     } catch (error) {
       console.error("Error fetching contributions by faculty:", error);

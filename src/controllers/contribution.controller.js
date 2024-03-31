@@ -38,6 +38,7 @@ exports.deleteContribution = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.viewAllContributionbyFaculty = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -48,6 +49,7 @@ exports.viewAllContributionbyFaculty = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getContributionDetails = async (req, res) => {
   try {
     const contributionId = req.params.id;
