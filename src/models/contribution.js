@@ -34,6 +34,11 @@ const contributionSchema = new mongoose.Schema(
       ref: "Event",
       required: true,
     },
+    faculty: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Faculty",
+      required: true,
+    },
   },
   {
     timestamps: true,

@@ -20,7 +20,7 @@ module.exports = function (app) {
   );
 
   app.get(
-    "/api/contribution-management/contribution/:id", 
+    "/api/contribution-management/contribution/:id",
     [authJwt.verifyToken, authJwt.isManager],
     controller.getContributionDetails
   );
@@ -52,38 +52,49 @@ module.exports = function (app) {
   );
 
   // Guest
-  app.get('/api/guest/contribution',
-  [authJwt.verifyToken, authJwt.isGuest],
-  controller.getPublicContributions);
+  app.get(
+    "/api/guest/contribution",
+    [authJwt.verifyToken, authJwt.isGuest],
+    controller.getPublicContributions
+  );
 
   // Student
-  app.get("/api/student/:facultyId",
+  app.get(
+    "/api/contribution-management/student/:id",
     [authJwt.verifyToken, authJwt.isStudent],
     controller.viewAllContributionbyFaculty
-  ); 
+  );
 
-   app.post("/api/student/contribution/:idEvent", 
-   [authJwt.verifyToken, authJwt.isStudent],
-       upload.fields([
+  app.post(
+    "/api/student/contribution/:idEvent",
+    [authJwt.verifyToken, authJwt.isStudent],
+    upload.fields([
       { name: "image", maxCount: 1 },
       { name: "document", maxCount: 1 },
     ]),
-  controller.createContributionForStudent);
+    controller.createContributionForStudent
+  );
 
-  app.put("/api/student/contribution", 
-  [authJwt.verifyToken, authJwt.isStudent],
-  upload.fields([
-    { name: "image", maxCount: 1 },
-    { name: "document", maxCount: 1 },
-  ]),
-  controller.updateContributionForStudent);
+  app.put(
+    "/api/student/contribution",
+    [authJwt.verifyToken, authJwt.isStudent],
+    upload.fields([
+      { name: "image", maxCount: 1 },
+      { name: "document", maxCount: 1 },
+    ]),
+    controller.updateContributionForStudent
+  );
 
-  app.delete("/api/student/contribution/:id",
-  [authJwt.verifyToken, authJwt.isStudent],
-  controller.deleteContributionForStudent);
-  
+  app.delete(
+    "/api/student/contribution/:id",
+    [authJwt.verifyToken, authJwt.isStudent],
+    controller.deleteContributionForStudent
+  );
+
   // Marketing Coordinator
-  app.put("/api/coordinator/contribution",
-  [authJwt.verifyToken, authJwt.isCoordinator],
-  controller.changeContributionStatus);
+  app.put(
+    "/api/coordinator/contribution",
+    [authJwt.verifyToken, authJwt.isCoordinator],
+    controller.changeContributionStatus
+  );
 };

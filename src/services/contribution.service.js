@@ -2,6 +2,7 @@ const Contribution = require("../models/contribution");
 const cloudinaryService = require("../services/cloudinary.service");
 const Event = require("../models/event");
 const User = require("../models/user");
+const Faculty = require("../models/faculty");
 const { v4: uuidv4 } = require("uuid");
 
 const contributionService = {
@@ -14,6 +15,7 @@ const contributionService = {
         status: contributionForm.status || "pending",
         submitter: contributionForm.submitter,
         event: contributionForm.event,
+        faculty: contributionForm.faculty,
       });
 
       const imageFile = files["image"] ? files["image"][0] : null;
@@ -53,6 +55,7 @@ const contributionService = {
       const contributions = await Contribution.find();
       for (let i = 0; i < contributions.length; i++) {
         const event = await Event.findById(contributions[i].event);
+        const faculty = await Faculty.findById(contributions[i].faculty);
         const submitter = await User.findById(contributions[i].submitter);
 
         const contributionInfo = {
@@ -62,6 +65,7 @@ const contributionService = {
           status: contributions[i].status,
           submitter: submitter.email,
           event: event.name,
+          faculty: faculty.name,
           image: contributions[i].image,
           document: contributions[i].document,
         };
@@ -91,6 +95,15 @@ const contributionService = {
           throw new Error("Event not found");
         } else {
           contribution.event = contributionForm.event;
+        }
+      }
+
+      if (contributionForm.faculty) {
+        const faculty = await Faculty.findById(contributionForm.faculty);
+        if (!faculty) {
+          throw new Error("Faculty not found");
+        } else {
+          contribution.faculty = contributionForm.faculty;
         }
       }
 
@@ -153,12 +166,21 @@ const contributionService = {
       throw error;
     }
   },
-  async viewAllContributionbyFaculty(facultyId) {
+
+  async viewAllContributionbyFaculty(userId) {
     try {
-      const users = await User.find({ faculty: facultyId });
-      const userIds = users.map((user) => user._id);
+      console.log("User ID: " + userId);
+      const user = await User.findById(userId);
+      const faculty = user.faculty;
+
+      console.log("Faculty: " + faculty);
+
+      // Find all contribution in the faculty
+      const userIds = await User.find({ faculty: faculty }).select("_id");
+      const userIdsArray = userIds.map((userId) => userId._id);
+
       const contributions = await Contribution.find({
-        submitter: { $in: userIds },
+        submitter: { $in: userIdsArray },
       });
 
       return contributions;
@@ -167,6 +189,7 @@ const contributionService = {
       throw error;
     }
   },
+
   async detailContribution(id) {
     try {
       const contribution = await Contribution.findById(id);
@@ -194,6 +217,7 @@ const contributionService = {
       if (!event) {
         throw new Error("Event not found");
       }
+
       const currentDate = new Date();
       if (currentDate > new Date(event.firstDeadLineDate)) {
         throw new Error(

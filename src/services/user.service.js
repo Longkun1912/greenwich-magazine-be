@@ -54,7 +54,8 @@ const UserService = {
   async viewUsers() {
     try {
       const users = await User.find().populate("role").populate("faculty");
-      return users.map(
+
+      const systemUsers = users.map(
         ({
           _id,
           username,
@@ -75,6 +76,9 @@ const UserService = {
           updatedAt,
         })
       );
+
+      // Remove admin role from the list
+      return systemUsers.filter((user) => user.role !== "admin");
     } catch (error) {
       throw new Error(error);
     }

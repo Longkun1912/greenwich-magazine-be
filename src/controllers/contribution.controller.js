@@ -40,26 +40,30 @@ exports.deleteContribution = async (req, res) => {
 };
 exports.viewAllContributionbyFaculty = async (req, res) => {
   try {
-      const facultyId = req.params.facultyId; 
-      const contributions = await contributionService.viewAllContributionbyFaculty(facultyId);
-      res.json(contributions);
+    const userId = req.params.id;
+    const contributions =
+      await contributionService.viewAllContributionbyFaculty(userId);
+    res.status(200).json(contributions);
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 exports.getContributionDetails = async (req, res) => {
   try {
-      const contributionId = req.params.id; 
-      console.log(contributionId);
-      const contribution = await contributionService.detailContribution(contributionId);
-      res.status(200).json(contribution);
-      }catch (error) {
-        res.status(500).json({ error: error.message });
-      }
+    const contributionId = req.params.id;
+    console.log(contributionId);
+    const contribution = await contributionService.detailContribution(
+      contributionId
+    );
+    res.status(200).json(contribution);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 exports.getPublicContributions = async (req, res) => {
   try {
-    const publicContributions = await contributionService.getPublicContributionsForGuest();
+    const publicContributions =
+      await contributionService.getPublicContributionsForGuest();
     res.json(publicContributions);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -68,7 +72,11 @@ exports.getPublicContributions = async (req, res) => {
 exports.createContributionForStudent = async (req, res) => {
   try {
     const idEvent = req.params.idEvent;
-    await contributionService.createContributionForStudent(req.body, req.files, idEvent);
+    await contributionService.createContributionForStudent(
+      req.body,
+      req.files,
+      idEvent
+    );
     res.status(200).json("Create contribution successfully.");
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -76,7 +84,10 @@ exports.createContributionForStudent = async (req, res) => {
 };
 exports.updateContributionForStudent = async (req, res) => {
   try {
-    const result = await contributionService.updateContributionForStudent(req.body, req.files);
+    const result = await contributionService.updateContributionForStudent(
+      req.body,
+      req.files
+    );
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -85,17 +96,23 @@ exports.updateContributionForStudent = async (req, res) => {
 
 exports.deleteContributionForStudent = async (req, res) => {
   try {
-    const result = await contributionService.deleteContributionForStudent(req.params.id);
+    const result = await contributionService.deleteContributionForStudent(
+      req.params.id
+    );
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 exports.changeContributionStatus = async (req, res) => {
-  try { 
-    const updatedContribution = await contributionService.changeContributionStatus(req.body.id, req.body.status);
-    res.status(200).json(updatedContribution); 
+  try {
+    const updatedContribution =
+      await contributionService.changeContributionStatus(
+        req.body.id,
+        req.body.status
+      );
+    res.status(200).json(updatedContribution);
   } catch (error) {
-    res.status(500).json({ error: error.message }); 
+    res.status(500).json({ error: error.message });
   }
 };
