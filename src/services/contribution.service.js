@@ -406,13 +406,33 @@ const contributionService = {
   //viewAllContributionbyIdFaculty
   async viewAllContributionbyIdFaculty(facultyId) {
     try {
+      const contributionInfos = [];
       const contributions = await Contribution.find({ faculty: facultyId });
-      return contributions;
+      for (let i = 0; i < contributions.length; i++) {
+        const event = await Event.findById(contributions[i].event);
+        const faculty = await Faculty.findById(contributions[i].faculty);
+        const submitter = await User.findById(contributions[i].submitter);
+  
+        const contributionInfo = {
+          id: contributions[i]._id,
+          title: contributions[i].title,
+          content: contributions[i].content,
+          status: contributions[i].status,
+          submitter: submitter.email,
+          event: event.name,
+          faculty: faculty.name,
+          image: contributions[i].image,
+          document: contributions[i].document,
+        };
+        contributionInfos.push(contributionInfo);
+      }
+      return contributionInfos;
     } catch (error) {
       console.error("Error fetching contributions by faculty:", error);
       throw error;
     }
   }
+  
 
 };
 
