@@ -102,12 +102,12 @@ exports.deleteContributionForStudent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-exports.changeContributionStatus = async (req, res) => {
+exports.changeContributionState = async (req, res) => {
   try {
     const updatedContribution =
-      await contributionService.changeContributionStatus(
+      await contributionService.changeContributionState(
         req.body.id,
-        req.body.status
+        req.body.state
       );
     res.status(200).json(updatedContribution);
   } catch (error) {

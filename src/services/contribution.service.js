@@ -387,14 +387,14 @@ const contributionService = {
     }
   },
 
-  async changeContributionStatus(contributionId, newStatus) {
+  async changeContributionState(contributionId, newState) {
     console.log(contributionId);
     try {
       const contribution = await Contribution.findById(contributionId);
       if (!contribution) {
         throw new Error("Contribution not found");
       }
-      contribution.status = newStatus;
+      contribution.state = newState;
       const updatedContribution = await contribution.save();
       return updatedContribution;
     } catch (error) {

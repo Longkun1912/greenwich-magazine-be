@@ -20,9 +20,16 @@ const contributionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "modified", "public"],
+      enum: ["pending", "approved", "rejected", "modified"],
       default: "pending",
       required: true,
+    },
+    state:{
+      type: String,
+      enum: ["private", "public"],
+      default: "private",
+      required: true,
+
     },
     submitter: {
       type: mongoose.Schema.Types.ObjectId,

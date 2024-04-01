@@ -100,8 +100,8 @@ module.exports = function (app) {
   );
 
   app.put(
-    "/api/coordinator/contribution",
+    "/api/contribution-management/coordinator",
     [authJwt.verifyToken, authJwt.isCoordinator],
-    controller.changeContributionStatus
+    controller.changeContributionState
   );
 };

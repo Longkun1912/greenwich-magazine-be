@@ -3,7 +3,7 @@ const commentService = require("../services/comment.service");
 const commentController = {
     async createComment(req, res) {
         try {
-          const commentForm = req.body; // Assuming comment details are sent in the request body
+          const commentForm = req.body;
           const userId = req.userId;
           const contributionId = req.params.idContribution;
           if (!commentForm.content || !userId || !contributionId) {
