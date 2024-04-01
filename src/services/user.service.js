@@ -84,6 +84,28 @@ const UserService = {
     }
   },
 
+  async viewStudentByFaculty(coordinatorId) {
+    try {
+      const coordinator = await User.findById(coordinatorId);
+      const facultyId = coordinator.faculty;
+      const studentRole = await RoleService.findRoleByName("student");
+      const users = await User.find({
+        faculty: facultyId,
+        role: studentRole._id,
+      });
+
+      return users.map(({ _id, username, avatar, email, mobile }) => ({
+        _id,
+        username,
+        avatar,
+        email,
+        mobile,
+      }));
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
   async editUser(userForm, avatar_image) {
     try {
       const user = await User.findById(userForm.id);
@@ -101,7 +123,7 @@ const UserService = {
       user.username = userForm.username;
       user.mobile = userForm.mobile;
 
-      if (userForm.password) {
+      if (userForm.password && userForm.password.length > 0) {
         user.password = bcrypt.hashSync(userForm.password);
       }
 
@@ -117,6 +139,41 @@ const UserService = {
         await cloudinaryService.deleteUserImageFromCloudinary(user.email);
         const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
           avatar_image.buffer,
+          user.email
+        );
+        user.avatar = avatarName;
+      }
+
+      return await user.save();
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
+  async updateStudent(userForm, avatar) {
+    try {
+      const user = await User.findById(userForm.id);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+      user.username = userForm.username;
+
+      if (userForm.password && userForm.password.length > 0) {
+        user.password = bcrypt.hashSync(userForm.password);
+      }
+
+      // Check duplicate mobile but not for the current user
+      const mobileExist = await User.findOne({ mobile: userForm.mobile });
+      if (mobileExist && mobileExist._id.toString() !== userForm.id) {
+        throw new DuplicateMobileError("This mobile is already taken");
+      }
+      user.mobile = userForm.mobile;
+
+      if (avatar) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar.buffer,
           user.email
         );
         user.avatar = avatarName;

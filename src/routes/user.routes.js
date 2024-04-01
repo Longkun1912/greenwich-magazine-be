@@ -20,6 +20,12 @@ module.exports = function (app) {
     controller.viewUsers
   );
 
+  app.get(
+    "/api/user-management/students/:id",
+    [authJwt.verifyToken, authJwt.isCoordinator],
+    controller.viewStudentByFaculty
+  );
+
   app.post(
     "/api/user-management/user",
     [authJwt.verifyToken, authJwt.isAdmin],
@@ -36,6 +42,13 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isAdminOrManager],
     upload.single("avatar_image"),
     controller.editUser
+  );
+
+  app.put(
+    "/api/user-management/student",
+    [authJwt.verifyToken, authJwt.isCoordinator],
+    upload.single("avatar"),
+    controller.updateStudent
   );
 
   app.delete(

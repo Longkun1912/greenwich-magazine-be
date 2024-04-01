@@ -25,10 +25,32 @@ exports.viewUsers = async (req, res) => {
   }
 };
 
+exports.viewStudentByFaculty = async (req, res) => {
+  try {
+    const users = await UserService.viewStudentByFaculty(req.params.id);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.editUser = async (req, res) => {
   try {
     await UserService.editUser(req.body, req.file);
     res.status(200).send("Edit user successfully.");
+  } catch (error) {
+    if (error instanceof DuplicateMobileError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+};
+
+exports.updateStudent = async (req, res) => {
+  try {
+    await UserService.updateStudent(req.body, req.file);
+    res.status(200).send("Edit student successfully.");
   } catch (error) {
     if (error instanceof DuplicateMobileError) {
       res.status(400).json({ error: error.message });
