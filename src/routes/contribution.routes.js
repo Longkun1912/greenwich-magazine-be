@@ -76,7 +76,7 @@ module.exports = function (app) {
   );
 
   app.put(
-    "/api/student/contribution",
+    "/api/contribution-management/student/contribution",
     [authJwt.verifyToken, authJwt.isStudent],
     upload.fields([
       { name: "image", maxCount: 1 },
@@ -86,7 +86,7 @@ module.exports = function (app) {
   );
 
   app.delete(
-    "/api/student/contribution/:id",
+    "/api/contribution-management/student/contribution/:id",
     [authJwt.verifyToken, authJwt.isStudent],
     controller.deleteContributionForStudent
   );

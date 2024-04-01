@@ -5,6 +5,27 @@ const User = require("../models/user");
 const Faculty = require("../models/faculty");
 const { v4: uuidv4 } = require("uuid");
 
+const handleFile = async (file, fileType, contribution) => {
+  if (file) {
+    // Delete old file
+    if (contribution[fileType]) {
+      await cloudinaryService[
+        `deleteContribution${
+          fileType.charAt(0).toUpperCase() + fileType.slice(1)
+        }FromCloudinary`
+      ](contribution.id);
+    }
+
+    // Upload new file
+    const fileName = await cloudinaryService[
+      `uploadContribution${
+        fileType.charAt(0).toUpperCase() + fileType.slice(1)
+      }ToCloudinary`
+    ](file.buffer, contribution.id);
+    contribution[fileType] = fileName;
+  }
+};
+
 const contributionService = {
   async createContribution(contributionForm, files) {
     try {
@@ -110,29 +131,13 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      const handleFile = async (file, fileType) => {
-        if (file) {
-          // Delete old file
-          if (contribution[fileType]) {
-            await cloudinaryService[
-              `deleteContribution${
-                fileType.charAt(0).toUpperCase() + fileType.slice(1)
-              }FromCloudinary`
-            ](contribution.id);
-          }
+      if (imageFile) {
+        await handleFile(imageFile, "image", contribution);
+      }
 
-          // Upload new file
-          const fileName = await cloudinaryService[
-            `uploadContribution${
-              fileType.charAt(0).toUpperCase() + fileType.slice(1)
-            }ToCloudinary`
-          ](file.buffer, contribution.id);
-          contribution[fileType] = fileName;
-        }
-      };
-
-      await handleFile(imageFile, "image");
-      await handleFile(documentFile, "document");
+      if (documentFile) {
+        await handleFile(documentFile, "document", contribution);
+      }
 
       const updatedContribution = await contribution.save();
       return updatedContribution;
@@ -174,8 +179,27 @@ const contributionService = {
         throw new Error("User not found");
       }
 
+      const contributionInfos = [];
+
       const contributions = await Contribution.find({ faculty: user.faculty });
-      return contributions;
+
+      for (let i = 0; i < contributions.length; i++) {
+        const event = await Event.findById(contributions[i].event);
+        const submitter = await User.findById(contributions[i].submitter);
+
+        const contributionInfo = {
+          id: contributions[i]._id,
+          title: contributions[i].title,
+          content: contributions[i].content,
+          status: contributions[i].status,
+          submitter: submitter.email,
+          event: event.name,
+          image: contributions[i].image,
+          document: contributions[i].document,
+        };
+        contributionInfos.push(contributionInfo);
+      }
+      return contributionInfos;
     } catch (error) {
       console.error("Error fetching contributions by faculty:", error);
       throw error;
@@ -219,6 +243,13 @@ const contributionService = {
       const event = await Event.findById(contributionForm.event);
       if (!event) {
         throw new Error("Event not found");
+      } else {
+        const currentDate = new Date();
+        if (currentDate > new Date(event.firstDeadLineDate)) {
+          throw new Error(
+            "Contribution cannot be submitted after the first deadline"
+          );
+        }
       }
 
       const currentDate = new Date();
@@ -275,9 +306,13 @@ const contributionService = {
       if (!contribution) {
         throw new Error("Contribution not found");
       }
-      const event = await Event.findById(contribution.event);
-      if (!event) {
-        throw new Error("Event not found");
+
+      let event;
+
+      if (!contributionForm.event) {
+        event = await Event.findById(contribution.event);
+      } else {
+        event = await Event.findById(contributionForm.event);
       }
 
       const currentDate = new Date();
@@ -290,45 +325,27 @@ const contributionService = {
       // Cập nhật thông tin của contribution
       contribution.title = contributionForm.title;
       contribution.content = contributionForm.content;
-      contribution.status = contributionForm.status || "pending";
-
-      // Xử lý tệp đính kèm
-      const handleFile = async (file, fileType) => {
-        if (file) {
-          // Xóa tệp đính kèm cũ (nếu có)
-          if (contribution[fileType]) {
-            await cloudinaryService[
-              `deleteContribution${
-                fileType.charAt(0).toUpperCase() + fileType.slice(1)
-              }FromCloudinary`
-            ](contribution.id);
-          }
-
-          // Tải lên tệp đính kèm mới lên Cloudinary
-          const fileName = await cloudinaryService[
-            `uploadContribution${
-              fileType.charAt(0).toUpperCase() + fileType.slice(1)
-            }ToCloudinary`
-          ](file.buffer, contribution.id);
-          contribution[fileType] = fileName;
-        }
-      };
+      contribution.event = contributionForm.event;
 
       // Xử lý tệp ảnh và tệp tài liệu
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      await handleFile(imageFile, "image");
-      await handleFile(documentFile, "document");
+      if (imageFile) {
+        await handleFile(imageFile, "image", contribution);
+      }
 
-      // Lưu lại thông tin của contribution
-      const updatedContribution = await contribution.save();
-      return updatedContribution;
+      if (documentFile) {
+        await handleFile(documentFile, "document", contribution);
+      }
+
+      return await contribution.save();
     } catch (error) {
       console.error("Error updating contribution:", error);
       throw error;
     }
   },
+
   async deleteContributionForStudent(id) {
     try {
       const contribution = await Contribution.findById(id);
