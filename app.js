@@ -70,6 +70,7 @@ const Faculty = require("./src/models/faculty");
 const User = require("./src/models/user");
 const Contribution = require("./src/models/contribution");
 const Event = require("./src/models/event");
+const Comment = require("./src/models/comment");
 
 require("./src/routes/auth.routes")(app);
 require("./src/routes/user.routes")(app);
@@ -77,7 +78,7 @@ require("./src/routes/role.routes")(app);
 require("./src/routes/faculty.routes")(app);
 require("./src/routes/contribution.routes")(app);
 require("./src/routes/event.routes")(app);
-
+require("./src/routes/comment.routes")(app);
 // Default route
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Greenwich Magazine." });
