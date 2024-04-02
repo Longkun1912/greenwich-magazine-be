@@ -321,16 +321,19 @@ const contributionService = {
       }
 
       const currentDate = new Date();
-      if (currentDate > new Date(event.finalDeadLineDate)) {
-        throw new Error(
-          "Contribution cannot be updated after the final deadline"
-        );
+      if (event) {
+        if (currentDate > new Date(event.finalDeadLineDate)) {
+          throw new Error(
+            "Contribution cannot be updated after the final deadline"
+          );
+        } else {
+          contribution.event = contributionForm.event;
+        }
       }
 
       // Cập nhật thông tin của contribution
       contribution.title = contributionForm.title;
       contribution.content = contributionForm.content;
-      contribution.event = contributionForm.event;
 
       // Xử lý tệp ảnh và tệp tài liệu
       const imageFile = files["image"] ? files["image"][0] : null;
