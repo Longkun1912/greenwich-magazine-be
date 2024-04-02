@@ -79,6 +79,8 @@ require("./src/routes/faculty.routes")(app);
 require("./src/routes/contribution.routes")(app);
 require("./src/routes/event.routes")(app);
 require("./src/routes/comment.routes")(app);
+require("./src/routes/dashboard.routes")(app);
+
 // Default route
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Greenwich Magazine." });
