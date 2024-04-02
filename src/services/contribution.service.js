@@ -85,11 +85,16 @@ const contributionService = {
           content: contributions[i].content,
           status: contributions[i].status,
           submitter: submitter.email,
-          event: event.name,
-          faculty: faculty.name,
           image: contributions[i].image,
           document: contributions[i].document,
         };
+
+        if (event) {
+          contributionInfo.event = event.name;
+        }
+        if (faculty) {
+          contributionInfo.faculty = faculty.name;
+        }
         contributionInfos.push(contributionInfo);
       }
       return contributionInfos;
@@ -393,7 +398,7 @@ const contributionService = {
       if (!contribution) {
         throw new Error("Contribution not found");
       }
-      contribution.status = editForm.status
+      contribution.status = editForm.status;
       contribution.state = editForm.state;
       const updatedContribution = await contribution.save();
       return updatedContribution;
@@ -412,7 +417,7 @@ const contributionService = {
         const event = await Event.findById(contributions[i].event);
         const faculty = await Faculty.findById(contributions[i].faculty);
         const submitter = await User.findById(contributions[i].submitter);
-  
+
         const contributionInfo = {
           id: contributions[i]._id,
           title: contributions[i].title,
@@ -432,9 +437,7 @@ const contributionService = {
       console.error("Error fetching contributions by faculty:", error);
       throw error;
     }
-  }
-  
-
+  },
 };
 
 module.exports = contributionService;

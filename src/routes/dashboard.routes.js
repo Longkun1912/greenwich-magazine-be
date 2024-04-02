@@ -15,4 +15,16 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isManager],
     controller.viewNumberOfContributionsDashboard
   );
+
+  app.get(
+    "/api/dashboard/faculties/contributions",
+    [authJwt.verifyToken, authJwt.isManager],
+    controller.viewPercentageOfContributionsInFacultiesDashboard
+  );
+
+  app.get(
+    "/api/dashboard/faculties/contributors",
+    [authJwt.verifyToken, authJwt.isManager],
+    controller.viewNumberOfContributorsInEachFacultyDashboard
+  );
 };
