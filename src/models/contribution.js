@@ -27,7 +27,7 @@ const contributionSchema = new mongoose.Schema(
     state:{
       type: String,
       enum: ["private", "public"],
-      default: "private",
+      default: "public",
       required: true,
 
     },

@@ -107,7 +107,7 @@ exports.changeContributionState = async (req, res) => {
     const updatedContribution =
       await contributionService.changeContributionState(
         req.body.id,
-        req.body.state
+        req.body
       );
     res.status(200).json(updatedContribution);
   } catch (error) {

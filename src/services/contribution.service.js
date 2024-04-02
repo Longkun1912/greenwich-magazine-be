@@ -220,7 +220,7 @@ const contributionService = {
   },
   async getPublicContributionsForGuest() {
     try {
-      const publicContributions = await Contribution.find({ status: "public" });
+      const publicContributions = await Contribution.find({ state: "public" });
       return publicContributions;
     } catch (error) {
       console.error("Error fetching public contributions:", error);
@@ -387,14 +387,14 @@ const contributionService = {
     }
   },
 
-  async changeContributionState(contributionId, newState) {
-    console.log(contributionId);
+  async changeContributionState(contributionId, editForm) {
     try {
       const contribution = await Contribution.findById(contributionId);
       if (!contribution) {
         throw new Error("Contribution not found");
       }
-      contribution.state = newState;
+      contribution.status = editForm.status
+      contribution.state = editForm.state;
       const updatedContribution = await contribution.save();
       return updatedContribution;
     } catch (error) {
