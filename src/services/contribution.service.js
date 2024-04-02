@@ -225,7 +225,10 @@ const contributionService = {
   },
   async getPublicContributionsForGuest() {
     try {
-      const publicContributions = await Contribution.find({ state: "public" });
+      const publicContributions = await Contribution.find({ state: "public" })
+      .populate('submitter', 'username') 
+      .populate('event', 'name')
+      .populate('faculty', 'name');
       return publicContributions;
     } catch (error) {
       console.error("Error fetching public contributions:", error);
