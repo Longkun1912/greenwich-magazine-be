@@ -32,10 +32,21 @@ const UserService = {
         RoleService.findRoleByName(userForm.role),
         FacultyService.findFacultyByName(userForm.faculty),
       ]);
-
       user.role = role;
       user.faculty = faculty;
 
+      if (user.role.name === 'coordinator') {
+        const existingCoordinator = await User.findOne({ role: user.role, faculty: user.faculty });
+        if (existingCoordinator) {
+            throw new Error("There is already a coordinator for this faculty");
+        }
+    }
+      if (user.role.name === 'manager') {
+        const existingManager = await User.findOne({ role: user.role});
+        if (existingManager) {
+          throw new Error("There is already a manager for system");
+        }
+    }
       if (avatar_image) {
         const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
           avatar_image.buffer,
@@ -108,48 +119,55 @@ const UserService = {
 
   async editUser(userForm, avatar_image) {
     try {
-      const user = await User.findById(userForm.id);
+        const user = await User.findById(userForm.id);
 
-      if (!user) {
-        throw new Error("User not found");
-      }
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const mobileExist = await User.findOne({ mobile: userForm.mobile });
+        if (mobileExist && mobileExist._id.toString() !== userForm.id) {
+            throw new DuplicateMobileError("This mobile is already taken");
+        }
+        user.username = userForm.username;
+        user.mobile = userForm.mobile;
 
-      // Check duplicate mobile but not for the current user
-      const mobileExist = await User.findOne({ mobile: userForm.mobile });
-      if (mobileExist && mobileExist._id.toString() !== userForm.id) {
-        throw new DuplicateMobileError("This mobile is already taken");
-      }
+        if (userForm.password && userForm.password.length > 0) {
+            user.password = bcrypt.hashSync(userForm.password);
+        }
 
-      user.username = userForm.username;
-      user.mobile = userForm.mobile;
+        const [role, faculty] = await Promise.all([
+            RoleService.findRoleByName(userForm.role),
+            FacultyService.findFacultyByName(userForm.faculty),
+        ]);
 
-      if (userForm.password && userForm.password.length > 0) {
-        user.password = bcrypt.hashSync(userForm.password);
-      }
+        user.role = role;
+        user.faculty = faculty;
 
-      const [role, faculty] = await Promise.all([
-        RoleService.findRoleByName(userForm.role),
-        FacultyService.findFacultyByName(userForm.faculty),
-      ]);
-
-      user.role = role;
-      user.faculty = faculty;
-
-      if (avatar_image) {
-        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
-        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-          avatar_image.buffer,
-          user.email
-        );
-        user.avatar = avatarName;
-      }
-
-      return await user.save();
+        if (user.role.name === 'coordinator') {
+          const existingCoordinator = await User.findOne({ role: user.role, faculty: user.faculty });
+          if (existingCoordinator && existingCoordinator._id.toString() !== user._id.toString()) {
+              throw new Error("There is already a coordinator for this faculty");
+          }
+      }      
+        if (user.role.name === 'manager') {
+            const existingManager = await User.findOne({ role: user.role });
+            if (existingManager && existingManager._id.toString() !== user._id.toString()) {
+                throw new Error("There is already a manager for system");
+            }
+        }
+        if (avatar_image) {
+            await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+            const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+                avatar_image.buffer,
+                user.email
+            );
+            user.avatar = avatarName;
+        }
+        return await user.save();
     } catch (error) {
-      throw new Error(error);
+        throw new Error(error);
     }
-  },
-
+},
   async updateStudent(userForm, avatar) {
     try {
       const user = await User.findById(userForm.id);
