@@ -423,6 +423,7 @@ const contributionService = {
           faculty: faculty.name,
           image: contributions[i].image,
           document: contributions[i].document,
+          state: contributions[i].state,
         };
         contributionInfos.push(contributionInfo);
       }
