@@ -1,5 +1,6 @@
 const Contribution = require("../models/contribution");
 const cloudinaryService = require("../services/cloudinary.service");
+const googleDriveService = require("../services/google-drive.service");
 const Event = require("../models/event");
 const User = require("../models/user");
 const Faculty = require("../models/faculty");
@@ -13,7 +14,7 @@ const handleFile = async (file, fileType, contribution) => {
         `deleteContribution${
           fileType.charAt(0).toUpperCase() + fileType.slice(1)
         }FromCloudinary`
-      ](contribution.id);
+      ](contribution.title);
     }
 
     // Upload new file
@@ -21,7 +22,7 @@ const handleFile = async (file, fileType, contribution) => {
       `uploadContribution${
         fileType.charAt(0).toUpperCase() + fileType.slice(1)
       }ToCloudinary`
-    ](file.buffer, contribution.id);
+    ](file.buffer, contribution.title);
     contribution[fileType] = fileName;
   }
 };
@@ -29,6 +30,14 @@ const handleFile = async (file, fileType, contribution) => {
 const contributionService = {
   async createContribution(contributionForm, files) {
     try {
+      // Check if title is duplicated
+      const existingContribution = await Contribution.findOne({
+        title: contributionForm.title,
+      });
+      if (existingContribution) {
+        throw new Error("Contribution title already exists");
+      }
+
       const contribution = new Contribution({
         _id: uuidv4(),
         title: contributionForm.title,
@@ -42,7 +51,17 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      const fileTitle = contribution._id;
+      const fileTitle = contribution.title;
+
+      if (documentFile) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        console.log("Document name:", documentName);
+        contribution.document = documentName;
+      }
 
       if (imageFile) {
         const imageName =
@@ -51,15 +70,6 @@ const contributionService = {
             fileTitle
           );
         contribution.image = imageName;
-      }
-
-      if (documentFile) {
-        const documentName =
-          await cloudinaryService.uploadContributionDocumentToCloudinary(
-            documentFile.buffer,
-            fileTitle
-          );
-        contribution.document = documentName;
       }
 
       const createdContribution = await contribution.save();
@@ -111,6 +121,14 @@ const contributionService = {
         throw new Error("Contribution not found");
       }
 
+      // Check if title is duplicated
+      const existingContribution = await Contribution.findOne({
+        title: contributionForm.title,
+      });
+      if (existingContribution && existingContribution.id !== contribution.id) {
+        throw new Error("Contribution title already exists");
+      }
+
       contribution.title = contributionForm.title;
       contribution.content = contributionForm.content;
       contribution.status = contributionForm.status || "pending";
@@ -136,12 +154,22 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      if (imageFile) {
-        await handleFile(imageFile, "image", contribution);
+      if (documentFile) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        await googleDriveService.deleteFileFromGoogleDrive(
+          authClient,
+          documentFile
+        );
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        console.log("Document name:", documentName);
+        contribution.document = documentName;
       }
 
-      if (documentFile) {
-        await handleFile(documentFile, "document", contribution);
+      if (imageFile) {
+        await handleFile(imageFile, "image", contribution);
       }
 
       const updatedContribution = await contribution.save();
@@ -156,14 +184,16 @@ const contributionService = {
     try {
       const contribution = await Contribution.findById(id);
 
-      if (contribution.image) {
-        await cloudinaryService.deleteContributionImageFromCloudinary(
-          contribution.id
+      if (contribution.document) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        await googleDriveService.deleteFileFromGoogleDrive(
+          authClient,
+          documentFile
         );
       }
 
-      if (contribution.document) {
-        await cloudinaryService.deleteContributionDocumentFromCloudinary(
+      if (contribution.image) {
+        await cloudinaryService.deleteContributionImageFromCloudinary(
           contribution.id
         );
       }
@@ -226,9 +256,9 @@ const contributionService = {
   async getPublicContributionsForGuest() {
     try {
       const publicContributions = await Contribution.find({ state: "public" })
-      .populate('submitter', 'username') 
-      .populate('event', 'name')
-      .populate('faculty', 'name');
+        .populate("submitter", "username")
+        .populate("event", "name")
+        .populate("faculty", "name");
       return publicContributions;
     } catch (error) {
       console.error("Error fetching public contributions:", error);
@@ -238,6 +268,14 @@ const contributionService = {
 
   async createContributionForStudent(contributionForm, files) {
     try {
+      // Check if title is duplicated
+      const existingContribution = await Contribution.findOne({
+        title: contributionForm.title,
+      });
+      if (existingContribution) {
+        throw new Error("Contribution title already exists");
+      }
+
       const submitter = await User.findById(contributionForm.submitter);
       if (!submitter) {
         throw new Error("Submitter not found");
@@ -280,7 +318,17 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      const fileTitle = contribution._id;
+      const fileTitle = contribution.title;
+
+      if (documentFile) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        console.log("Document name:", documentName);
+        contribution.document = documentName;
+      }
 
       if (imageFile) {
         const imageName =
@@ -289,15 +337,6 @@ const contributionService = {
             fileTitle
           );
         contribution.image = imageName;
-      }
-
-      if (documentFile) {
-        const documentName =
-          await cloudinaryService.uploadContributionDocumentToCloudinary(
-            documentFile.buffer,
-            fileTitle
-          );
-        contribution.document = documentName;
       }
 
       const createdContribution = await contribution.save();
@@ -313,6 +352,14 @@ const contributionService = {
       const contribution = await Contribution.findById(contributionForm.id);
       if (!contribution) {
         throw new Error("Contribution not found");
+      }
+
+      // Check if title is duplicated
+      const existingContribution = await Contribution.findOne({
+        title: contributionForm.title,
+      });
+      if (existingContribution && existingContribution.id !== contribution.id) {
+        throw new Error("Contribution title already exists");
       }
 
       let event;
@@ -342,12 +389,23 @@ const contributionService = {
       const imageFile = files["image"] ? files["image"][0] : null;
       const documentFile = files["document"] ? files["document"][0] : null;
 
-      if (imageFile) {
-        await handleFile(imageFile, "image", contribution);
+      if (documentFile) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        await googleDriveService.deleteFileFromGoogleDrive(
+          authClient,
+          contribution.document
+        );
+
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        console.log("Document name:", documentName);
+        contribution.document = documentName;
       }
 
-      if (documentFile) {
-        await handleFile(documentFile, "document", contribution);
+      if (imageFile) {
+        await handleFile(imageFile, "image", contribution);
       }
 
       return await contribution.save();
@@ -376,15 +434,18 @@ const contributionService = {
         );
       }
 
+      console.log("Deleting contribution document:", contribution.title);
+      if (contribution.document) {
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        await googleDriveService.deleteFileFromGoogleDrive(
+          authClient,
+          contribution.document
+        );
+      }
+
       console.log("Deleting contribution image:", contribution.title);
       if (contribution.image) {
         await cloudinaryService.deleteContributionImageFromCloudinary(
-          contribution.title
-        );
-      }
-      console.log("Deleting contribution document:", contribution.title);
-      if (contribution.document) {
-        await cloudinaryService.deleteContributionDocumentFromCloudinary(
           contribution.title
         );
       }

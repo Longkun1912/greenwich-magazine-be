@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "iot-healthcare-system-410213",
+  "private_key_id": "7ab1dc2740682fffc425ec6d3db09d77bc344785",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDOHCXU4F1NSWNM\nDB6Ai59JtMc6yC6WipbfxE5g1qz1JmsT8dHkdxj9Q0NyKORRpUD6yPhrV9KZcrM2\nJaC/UW2cpcj+T1jiZakTaIkjxoEndMHgT/cDwFRpl73nzuOrzIH9nciDm+TH87wM\nIldwB/YDSDjws/nZLYPFTQKMDborbmBwNLQItkyz4UsDoAW1E+3bVlAUPkvg2CEv\nSZ3k19NFgJZffv4MnDJOdFHMOIqmmQeyPVyKcoeyHFjBJKmGoQO0L8wsfVPofkVc\n5sqy5zW0fkY5piAXMOj3+7J327dmgPaMAQfAvziG9RVWItMdU3O2TefADV+0FakT\nWHIKMfjdAgMBAAECggEAB5KxMSktRHG13E11sXNv3t1tlJNWYuGkuYQU/SnmIPvQ\nY2M3OxXFLUkTaVZnTTitMom/1vHbIxg7zXmEdoMfa+oLgIyZz3e8xqHIqC/a/wAj\nP4KwqMqgT2Dr8WCArQdOn2r0uyE3PsGN30RDwjIIsAYvUWjLfVdWyCEUPuEiPgY3\nURw2E/CXZX/q5gO12Rnkpalm2GZIGzPrc5x6Ycj4G687Ulr6wtKwN9i28gNKr2ZG\n9QSkAfrvusgLQBBNC9/bLfqmiKu4+g6I2ZN1xpqOo8Ei6ma87gMBImJC5co4+L1W\n1fTr2HlEX8/eQsUVnO1Z79885i1EbhacAKVb+3NrAQKBgQDtnwoKZyxAFH2wTRs+\nKb9nqZUWZD8EN71/Zst1WsMfYRmfF2ZJPkUxRjcvR/lVsJSNTr8MOJU4MnhgDsTh\nESso1uzYciidxFT+T0ybhgSEqrSx+VIhDs7zN0OeHpBhE51ZgoyzMY/n+Fs4k5No\nhfL5oqgV7onfsrVYvOXRc5ZUxQKBgQDeDS1M6R9h4BmRk8vPiagcx6ZheCtzuolW\n/TsurXIOZplAQXkegF18Fb9jtwn5/ZHV5GL9Hhip5N+3Mmv/TB2A8Q29yxnaGSge\nN6tDXi3UFpGWbTqNaVix/ZgMsFntZceXlWMg9LN6HeJcDeYgYlSwzcguzC4sTL9Y\n6/2d82BFOQKBgQDkkkR1R1NwfIV+zlzzSfM9QwoPVPStGPUmlPoHc/wXti6QM1EI\nCWdDg7hXudMk00vCNcpedhtLyHi0ZeCKYxpyGXQQrJdXU2Eyk5MsUxkLiK1yOVMA\nS59Uo4delSXqy5RjYsn3ISi9SdBttr9oHtlfulAXcLKdROleZ65l8NrdxQKBgA2G\nj/PXX2n+1I/hiNCjefIG10OopjzuZ988nZZCSmhGJ5+aXV5WQ1uDl5zjUWBA6dk1\niDIS2z2+C0KFd76dTE7GYCfnbzOxxJfSnEQGQJRiq4uWK7Lhb92nrNNZCqFDSd0Z\n5Gflf+k4WMlyr0nZs37xifgPx+A67IzmExTD9mFBAoGBAOFObDX473wunq5qYJY/\nVCmPwIHhQjDf/v9XHpoqmWPRdLTp0ERVblgxmEhgQ5x5o3vBFBHdouiQt/ouo03B\nZTeUDrLIwUu+9o9TgQieFuMLVPiXazCQs6F2t2mHSfJbcBYwwikdy5MGEwoTHJn5\nYVN3OjXAVBjGB57MZWXTFfI4\n-----END PRIVATE KEY-----\n",
+  "client_email": "long-862@iot-healthcare-system-410213.iam.gserviceaccount.com",
+  "client_id": "100248386896168727580",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/long-862%40iot-healthcare-system-410213.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

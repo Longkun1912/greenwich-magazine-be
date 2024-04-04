@@ -77,52 +77,6 @@ async function uploadContributionImageToCloudinary(buffer, title) {
   }
 }
 
-async function uploadContributionDocumentToCloudinary(buffer, title) {
-  try {
-    if (!title) {
-      throw new Error("Title is required");
-    }
-
-    if (!buffer) {
-      throw new Error("Buffer is required");
-    }
-
-    const uploadOptions = {
-      folder: "greenwich-magazine/contributions/documents",
-      public_id: title,
-      resource_type: "raw",
-    };
-
-    let uploadResult = null;
-
-    await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(uploadOptions, (error, result) => {
-          if (error) {
-            reject(
-              new Error(error.message || "Failed to upload to Cloudinary")
-            );
-            return;
-          }
-          uploadResult = result;
-          resolve();
-        })
-        .end(buffer);
-    });
-
-    if (!uploadResult || !uploadResult.url) {
-      throw new Error("Failed to get the URL from upload result");
-    }
-
-    console.log("New updated document URL: " + uploadResult.url);
-
-    return uploadResult.url;
-  } catch (error) {
-    console.log("Error uploading document: ", error);
-    throw error;
-  }
-}
-
 const deleteContributionImageFromCloudinary = async (title) => {
   try {
     if (!title) {
@@ -137,22 +91,6 @@ const deleteContributionImageFromCloudinary = async (title) => {
     throw error;
   }
 };
-
-async function deleteContributionDocumentFromCloudinary(title) {
-  try {
-    if (!title) {
-      throw new Error("Title is required");
-    }
-    console.log("Deleting document: " + title);
-
-    await cloudinary.uploader.destroy(
-      "greenwich-magazine/contributions/documents/" + title,
-      { resource_type: "raw" }
-    );
-  } catch (error) {
-    throw error;
-  }
-}
 
 // Files related to faculties
 async function uploadFacultyImageToCloudinary(buffer, name) {
@@ -206,11 +144,9 @@ const deleteFacultyImageFromCloudinary = async (name) => {
 const cloudinaryService = {
   uploadUserAvatarToCloudinary,
   uploadContributionImageToCloudinary,
-  uploadContributionDocumentToCloudinary,
   uploadFacultyImageToCloudinary,
   deleteUserImageFromCloudinary,
   deleteContributionImageFromCloudinary,
-  deleteContributionDocumentFromCloudinary,
   deleteFacultyImageFromCloudinary,
 };
 
