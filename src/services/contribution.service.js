@@ -505,6 +505,19 @@ const contributionService = {
       throw error;
     }
   },
+
+  async downloadDocumentThenZip(documentName) {
+    try {
+      const authClient = await googleDriveService.authorizeGoogleDrive();
+      const result = await googleDriveService.downloadFileThenZip(
+        authClient,
+        documentName
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 module.exports = contributionService;

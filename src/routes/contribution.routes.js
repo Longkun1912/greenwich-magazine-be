@@ -14,6 +14,12 @@ module.exports = function (app) {
   });
 
   app.get(
+    "/api/contribution-management/contribution/download/:documentName",
+    [authJwt.verifyToken],
+    controller.downloadDocumentThenZipToFolder
+  );
+
+  app.get(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isAdminOrManager],
     controller.getAllContributions

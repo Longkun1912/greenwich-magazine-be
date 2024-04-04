@@ -1,5 +1,16 @@
 const contributionService = require("../services/contribution.service");
 
+exports.downloadDocumentThenZipToFolder = async (req, res) => {
+  try {
+    const document = req.params.documentName;
+    console.log(document);
+    const result = await contributionService.downloadDocumentThenZip(document);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.createContribution = async (req, res) => {
   try {
     await contributionService.createContribution(req.body, req.files);
@@ -105,10 +116,7 @@ exports.deleteContributionForStudent = async (req, res) => {
 exports.changeContributionState = async (req, res) => {
   try {
     const updatedContribution =
-      await contributionService.changeContributionState(
-        req.body.id,
-        req.body
-      );
+      await contributionService.changeContributionState(req.body.id, req.body);
     res.status(200).json(updatedContribution);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -118,8 +126,9 @@ exports.changeContributionState = async (req, res) => {
 //viewAllContributionbyIdFaculty
 exports.viewAllContributionbyIdFaculty = async (req, res) => {
   try {
-    const facultyId = req.params.facultyId; 
-    const contributions = await contributionService.viewAllContributionbyIdFaculty(facultyId);
+    const facultyId = req.params.facultyId;
+    const contributions =
+      await contributionService.viewAllContributionbyIdFaculty(facultyId);
     res.json(contributions);
   } catch (error) {
     res.status(500).json({ error: error.message });
