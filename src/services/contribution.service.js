@@ -158,7 +158,7 @@ const contributionService = {
         const authClient = await googleDriveService.authorizeGoogleDrive();
         await googleDriveService.deleteFileFromGoogleDrive(
           authClient,
-          documentFile
+          contribution.document
         );
         const documentName = await googleDriveService.uploadFileToGoogleDrive(
           authClient,
@@ -188,13 +188,13 @@ const contributionService = {
         const authClient = await googleDriveService.authorizeGoogleDrive();
         await googleDriveService.deleteFileFromGoogleDrive(
           authClient,
-          documentFile
+          contribution.document
         );
       }
 
       if (contribution.image) {
         await cloudinaryService.deleteContributionImageFromCloudinary(
-          contribution.id
+          contribution.title
         );
       }
 
