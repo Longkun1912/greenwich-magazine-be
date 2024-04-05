@@ -73,15 +73,6 @@ exports.getContributionDetails = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-exports.getPublicContributions = async (req, res) => {
-  try {
-    const publicContributions =
-      await contributionService.getPublicContributionsForGuest();
-    res.json(publicContributions);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 exports.createContributionForStudent = async (req, res) => {
   try {
@@ -113,6 +104,8 @@ exports.deleteContributionForStudent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+//coordinator
 exports.changeContributionState = async (req, res) => {
   try {
     const updatedContribution =
@@ -130,6 +123,18 @@ exports.viewAllContributionbyIdFaculty = async (req, res) => {
     const contributions =
       await contributionService.viewAllContributionbyIdFaculty(facultyId);
     res.json(contributions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+//Guest
+exports.getPublicContributions = async (req, res) => {
+  try {
+    const facultyId = req.params.facultyId;
+    const publicContributions =
+      await contributionService.getPublicContributionsForGuest(facultyId);
+    res.json(publicContributions);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

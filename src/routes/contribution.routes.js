@@ -57,12 +57,6 @@ module.exports = function (app) {
     controller.deleteContribution
   );
 
-  // Guest
-  app.get(
-    "/api/guest/contribution",
-    [authJwt.verifyToken, authJwt.isGuest],
-    controller.getPublicContributions
-  );
 
   // Student
   app.get(
@@ -110,4 +104,11 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isCoordinator],
     controller.changeContributionState
   );
+
+    // Guest
+    app.get(
+      "/api/guest/contribution/:facultyId",
+      [authJwt.verifyToken, authJwt.isGuest],
+      controller.getPublicContributions
+    );
 };
