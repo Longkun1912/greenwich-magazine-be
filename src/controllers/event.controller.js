@@ -44,6 +44,16 @@ const eventController = {
       res.status(500).json({ error: error.message });
     }
   },
+  async updateEventForCoordinator(req, res) {
+    try {
+      const eventId = req.params.id; // Assuming the event ID is passed as a route parameter
+      const eventDetails = req.body; // Assumed that updated event details are sent in the request body
+      const updatedEvent = await eventService.updateEventForCoordinator(eventId, eventDetails);
+      res.status(200).json(updatedEvent);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 module.exports = eventController;

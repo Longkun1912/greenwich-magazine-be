@@ -31,4 +31,8 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isAdmin],
     eventController.deleteEvent
   ); // Route for deleting an event, accessible only to admins
+
+  app.put("/api/coordinator/events/:id", 
+  [authJwt.verifyToken, authJwt.isCoordinator],
+  eventController.updateEventForCoordinator);
 };

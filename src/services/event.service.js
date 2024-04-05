@@ -40,6 +40,8 @@ const eventService = {
       }
       if (eventDetails.firstDeadLineDate) {
         event.firstDeadLineDate = eventDetails.firstDeadLineDate;
+        event.finalDeadLineDate = new Date(event.firstDeadLineDate);
+        event.finalDeadLineDate.setDate(event.finalDeadLineDate.getDate() + 14);
       }
 
       const updatedEvent = await event.save();
@@ -59,6 +61,24 @@ const eventService = {
       return { message: "Successfully deleted event" };
     } catch (error) {
       console.error("Error deleting event:", error);
+      throw error;
+    }
+  },
+  async updateEventForCoordinator(id, eventDetails) {
+    try {
+      const event = await Event.findById(id);
+      if (!event) {
+        throw new Error("Event not found");
+      }
+      if (eventDetails.firstDeadLineDate) {
+        event.firstDeadLineDate = eventDetails.firstDeadLineDate;
+        event.finalDeadLineDate = new Date(event.firstDeadLineDate);
+        event.finalDeadLineDate.setDate(event.finalDeadLineDate.getDate() + 14);
+      }
+      const updatedEvent = await event.save();
+      return updatedEvent;
+    } catch (error) {
+      console.error("Error updating event:", error);
       throw error;
     }
   },
