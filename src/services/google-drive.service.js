@@ -83,66 +83,8 @@ async function deleteFileFromGoogleDrive(authClient, fileName) {
   }
 }
 
-async function downloadFileThenZip(authClient, fileName) {
-  try {
-    if (!authClient) {
-      throw new Error("Auth client is required");
-    }
-
-    const drive = google.drive({ version: "v3", auth: authClient });
-    const zipFileName = `greenwich-magazine.zip`;
-
-    const file = await drive.files.list({
-      q: `name = '${fileName}'`,
-    });
-
-    if (file.data.files.length === 0) {
-      throw new Error("File not found");
-    }
-
-    // Download file
-    const response = await drive.files.get(
-      {
-        fileId: file.data.files[0].id,
-        alt: "media",
-      },
-      { responseType: "stream" }
-    );
-
-    // Write the file to disk
-    const filePath = `./${fileName}`;
-    const dest = fs.createWriteStream(filePath);
-    response.data.pipe(dest);
-
-    // Wait for the file to be written
-    await new Promise((resolve, reject) => {
-      dest.on("finish", resolve);
-      dest.on("error", reject);
-    });
-
-    // Create a zip file
-    const zip = archiver("zip", {
-      zlib: { level: 9 }, // Sets the compression level.
-    });
-
-    const output = fs.createWriteStream(`./${zipFileName}`);
-    zip.pipe(output);
-
-    // Add the file to the zip
-    zip.file(filePath, { name: fileName });
-
-    // Finalize the zip (async)
-    await zip.finalize();
-
-    return zipFileName;
-  } catch (error) {
-    throw error;
-  }
-}
-
 const googleDriveService = {
   authorizeGoogleDrive,
-  downloadFileThenZip,
   uploadFileToGoogleDrive,
   deleteFileFromGoogleDrive,
 };

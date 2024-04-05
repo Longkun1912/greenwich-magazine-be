@@ -1,11 +1,39 @@
 const contributionService = require("../services/contribution.service");
+const { google } = require("googleapis");
+const googleDriveService = require("../services/google-drive.service");
 
-exports.downloadDocumentThenZipToFolder = async (req, res) => {
+exports.fetchFileThenReturnToBrowser = async (req, res) => {
   try {
-    const document = req.params.documentName;
-    console.log(document);
-    const result = await contributionService.downloadDocumentThenZip(document);
-    res.status(200).json(result);
+    const authClient = await googleDriveService.authorizeGoogleDrive();
+    const drive = google.drive({ version: "v3", auth: authClient });
+    const fileName = req.params.documentName;
+
+    const file = await drive.files.list({
+      q: `name = '${fileName}'`,
+    });
+
+    if (file.data.files.length === 0) {
+      res.status(404).json({ error: "File not found" });
+    }
+
+    const existedFile = file.data.files[0];
+    // Return the file to the client
+    drive.files.get(
+      { fileId: existedFile.id, alt: "media" },
+      { responseType: "stream" },
+      function (err, response) {
+        if (err) {
+          console.log("The API returned an error: " + err);
+          return;
+        }
+        res.setHeader("Content-Type", existedFile.mimeType);
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=" + existedFile.name
+        );
+        response.data.pipe(res);
+      }
+    );
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

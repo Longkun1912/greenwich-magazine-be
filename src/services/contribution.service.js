@@ -253,7 +253,7 @@ const contributionService = {
       throw error;
     }
   },
-  
+
   async createContributionForStudent(contributionForm, files) {
     try {
       // Check if title is duplicated
@@ -467,46 +467,45 @@ const contributionService = {
   //viewAllContributionbyIdFaculty
   async viewAllContributionbyIdFaculty(coordinatorId) {
     try {
-        const coordinator = await User.findById(coordinatorId);
-        if (!coordinator) {
-            throw new Error("Coordinator not found");
-        }
+      const coordinator = await User.findById(coordinatorId);
+      if (!coordinator) {
+        throw new Error("Coordinator not found");
+      }
 
-        const facultyId = coordinator.faculty; // Giả sử coordinator có trường faculty lưu ID của faculty mà họ quản lý
-        if (!facultyId) {
-            throw new Error("Coordinator is not associated with any faculty");
-        }
+      const facultyId = coordinator.faculty; // Giả sử coordinator có trường faculty lưu ID của faculty mà họ quản lý
+      if (!facultyId) {
+        throw new Error("Coordinator is not associated with any faculty");
+      }
 
-        const contributionInfos = [];
-        const contributions = await Contribution.find({ faculty: facultyId });
+      const contributionInfos = [];
+      const contributions = await Contribution.find({ faculty: facultyId });
 
-        for (let i = 0; i < contributions.length; i++) {
-            const event = await Event.findById(contributions[i].event);
-            const faculty = await Faculty.findById(contributions[i].faculty);
-            const submitter = await User.findById(contributions[i].submitter);
+      for (let i = 0; i < contributions.length; i++) {
+        const event = await Event.findById(contributions[i].event);
+        const faculty = await Faculty.findById(contributions[i].faculty);
+        const submitter = await User.findById(contributions[i].submitter);
 
-            const contributionInfo = {
-                id: contributions[i]._id,
-                title: contributions[i].title,
-                content: contributions[i].content,
-                status: contributions[i].status,
-                submitter: submitter.email,
-                event: event.name,
-                faculty: faculty.name,
-                image: contributions[i].image,
-                document: contributions[i].document,
-                state: contributions[i].state,
-            };
-            contributionInfos.push(contributionInfo);
-        }
+        const contributionInfo = {
+          id: contributions[i]._id,
+          title: contributions[i].title,
+          content: contributions[i].content,
+          status: contributions[i].status,
+          submitter: submitter.email,
+          event: event.name,
+          faculty: faculty.name,
+          image: contributions[i].image,
+          document: contributions[i].document,
+          state: contributions[i].state,
+        };
+        contributionInfos.push(contributionInfo);
+      }
 
-        return contributionInfos;
+      return contributionInfos;
     } catch (error) {
-        console.error("Error fetching contributions by faculty:", error);
-        throw error;
+      console.error("Error fetching contributions by faculty:", error);
+      throw error;
     }
   },
-
 
   //Guest
   async getPublicContributionsForGuest(guestId) {
@@ -522,7 +521,10 @@ const contributionService = {
       }
 
       // Lấy ra tất cả các đóng góp công khai từ khoa tương ứng
-      const publicContributions = await Contribution.find({ faculty: facultyId, state: "public" })
+      const publicContributions = await Contribution.find({
+        faculty: facultyId,
+        state: "public",
+      })
         .populate("submitter", "username")
         .populate("event", "name")
         .populate("faculty", "name");
@@ -530,19 +532,6 @@ const contributionService = {
       return publicContributions;
     } catch (error) {
       console.error("Error fetching public contributions:", error);
-      throw error;
-    }
-  },
-  //download
-  async downloadDocumentThenZip(documentName) {
-    try {
-      const authClient = await googleDriveService.authorizeGoogleDrive();
-      const result = await googleDriveService.downloadFileThenZip(
-        authClient,
-        documentName
-      );
-      return result;
-    } catch (error) {
       throw error;
     }
   },

@@ -16,7 +16,7 @@ module.exports = function (app) {
   app.get(
     "/api/contribution-management/contribution/download/:documentName",
     [authJwt.verifyToken],
-    controller.downloadDocumentThenZipToFolder
+    controller.fetchFileThenReturnToBrowser
   );
 
   app.get(
@@ -56,7 +56,6 @@ module.exports = function (app) {
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.deleteContribution
   );
-
 
   // Student
   app.get(
@@ -105,10 +104,10 @@ module.exports = function (app) {
     controller.changeContributionState
   );
 
-    // Guest
-    app.get(
-      "/api/guest/contribution/:facultyId",
-      [authJwt.verifyToken, authJwt.isGuest],
-      controller.getPublicContributions
-    );
+  // Guest
+  app.get(
+    "/api/guest/contribution/:facultyId",
+    [authJwt.verifyToken, authJwt.isGuest],
+    controller.getPublicContributions
+  );
 };
