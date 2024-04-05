@@ -3,6 +3,29 @@ const UserService = require("../services/user.service");
 const DuplicateEmailError = require("../errors/duplicate.email");
 const DuplicateMobileError = require("../errors/duplicate.mobile");
 
+exports.getCurrentUserInfo = async (req, res) => {
+  try {
+    await UserService.getCurrentUserInfo(req.params.userId).then((response) => {
+      res.status(200).json(response);
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.editProfile = async (req, res) => {
+  try {
+    await UserService.editProfile(req.body, req.file);
+    res.status(200).send("Edit profile successfully.");
+  } catch (error) {
+    if (error instanceof DuplicateMobileError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+};
+
 exports.createUser = async (req, res) => {
   try {
     await UserService.createUser(req.body, req.file);

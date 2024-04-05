@@ -15,6 +15,19 @@ module.exports = function (app) {
   });
 
   app.get(
+    "/api/user-management/profile/:userId",
+    [authJwt.verifyToken],
+    controller.getCurrentUserInfo
+  );
+
+  app.put(
+    "/api/user-management/profile",
+    [authJwt.verifyToken],
+    upload.single("avatar_image"),
+    controller.editProfile
+  );
+
+  app.get(
     "/api/user-management/users",
     [authJwt.verifyToken, authJwt.isAdminOrManager],
     controller.viewUsers

@@ -7,6 +7,66 @@ const DuplicateEmailError = require("../errors/duplicate.email");
 const DuplicateMobileError = require("../errors/duplicate.mobile");
 
 const UserService = {
+  async getCurrentUserInfo(userId) {
+    try {
+      const user = await User.findById(userId)
+        .populate("role")
+        .populate("faculty");
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        mobile: user.mobile,
+        avatar: user.avatar,
+        role: user.role.name,
+        faculty: user.faculty ? user.faculty.name : null,
+        updatedAt: user.updatedAt,
+      };
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
+  async editProfile(profileForm, avatar_image) {
+    try {
+      const user = await User.findById(profileForm.id);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const mobileExist = await User.findOne({ mobile: profileForm.mobile });
+      if (mobileExist && mobileExist._id.toString() !== profileForm.id) {
+        throw new DuplicateMobileError("This mobile is already taken");
+      }
+
+      user.username = profileForm.username;
+      user.mobile = profileForm.mobile;
+
+      if (avatar_image) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar_image.buffer,
+          user.email
+        );
+        user.avatar = avatarName;
+      }
+
+      if (profileForm.password) {
+        user.password = bcrypt.hashSync(profileForm.password);
+      }
+
+      return await user.save();
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
   async createUser(userForm, avatar_image) {
     try {
       const user = new User({
@@ -35,18 +95,21 @@ const UserService = {
       user.role = role;
       user.faculty = faculty;
 
-      if (user.role.name === 'coordinator') {
-        const existingCoordinator = await User.findOne({ role: user.role, faculty: user.faculty });
+      if (user.role.name === "coordinator") {
+        const existingCoordinator = await User.findOne({
+          role: user.role,
+          faculty: user.faculty,
+        });
         if (existingCoordinator) {
-            throw new Error("There is already a coordinator for this faculty");
+          throw new Error("There is already a coordinator for this faculty");
         }
-    }
-      if (user.role.name === 'manager') {
-        const existingManager = await User.findOne({ role: user.role});
+      }
+      if (user.role.name === "manager") {
+        const existingManager = await User.findOne({ role: user.role });
         if (existingManager) {
           throw new Error("There is already a manager for system");
         }
-    }
+      }
       if (avatar_image) {
         const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
           avatar_image.buffer,
@@ -119,55 +182,64 @@ const UserService = {
 
   async editUser(userForm, avatar_image) {
     try {
-        const user = await User.findById(userForm.id);
+      const user = await User.findById(userForm.id);
 
-        if (!user) {
-            throw new Error("User not found");
-        }
-        const mobileExist = await User.findOne({ mobile: userForm.mobile });
-        if (mobileExist && mobileExist._id.toString() !== userForm.id) {
-            throw new DuplicateMobileError("This mobile is already taken");
-        }
-        user.username = userForm.username;
-        user.mobile = userForm.mobile;
+      if (!user) {
+        throw new Error("User not found");
+      }
+      const mobileExist = await User.findOne({ mobile: userForm.mobile });
+      if (mobileExist && mobileExist._id.toString() !== userForm.id) {
+        throw new DuplicateMobileError("This mobile is already taken");
+      }
+      user.username = userForm.username;
+      user.mobile = userForm.mobile;
 
-        if (userForm.password && userForm.password.length > 0) {
-            user.password = bcrypt.hashSync(userForm.password);
-        }
+      if (userForm.password && userForm.password.length > 0) {
+        user.password = bcrypt.hashSync(userForm.password);
+      }
 
-        const [role, faculty] = await Promise.all([
-            RoleService.findRoleByName(userForm.role),
-            FacultyService.findFacultyByName(userForm.faculty),
-        ]);
+      const [role, faculty] = await Promise.all([
+        RoleService.findRoleByName(userForm.role),
+        FacultyService.findFacultyByName(userForm.faculty),
+      ]);
 
-        user.role = role;
-        user.faculty = faculty;
+      user.role = role;
+      user.faculty = faculty;
 
-        if (user.role.name === 'coordinator') {
-          const existingCoordinator = await User.findOne({ role: user.role, faculty: user.faculty });
-          if (existingCoordinator && existingCoordinator._id.toString() !== user._id.toString()) {
-              throw new Error("There is already a coordinator for this faculty");
-          }
-      }      
-        if (user.role.name === 'manager') {
-            const existingManager = await User.findOne({ role: user.role });
-            if (existingManager && existingManager._id.toString() !== user._id.toString()) {
-                throw new Error("There is already a manager for system");
-            }
+      if (user.role.name === "coordinator") {
+        const existingCoordinator = await User.findOne({
+          role: user.role,
+          faculty: user.faculty,
+        });
+        if (
+          existingCoordinator &&
+          existingCoordinator._id.toString() !== user._id.toString()
+        ) {
+          throw new Error("There is already a coordinator for this faculty");
         }
-        if (avatar_image) {
-            await cloudinaryService.deleteUserImageFromCloudinary(user.email);
-            const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
-                avatar_image.buffer,
-                user.email
-            );
-            user.avatar = avatarName;
+      }
+      if (user.role.name === "manager") {
+        const existingManager = await User.findOne({ role: user.role });
+        if (
+          existingManager &&
+          existingManager._id.toString() !== user._id.toString()
+        ) {
+          throw new Error("There is already a manager for system");
         }
-        return await user.save();
+      }
+      if (avatar_image) {
+        await cloudinaryService.deleteUserImageFromCloudinary(user.email);
+        const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
+          avatar_image.buffer,
+          user.email
+        );
+        user.avatar = avatarName;
+      }
+      return await user.save();
     } catch (error) {
-        throw new Error(error);
+      throw new Error(error);
     }
-},
+  },
   async updateStudent(userForm, avatar) {
     try {
       const user = await User.findById(userForm.id);
