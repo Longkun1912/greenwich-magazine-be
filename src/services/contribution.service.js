@@ -271,7 +271,7 @@ const contributionService = {
 
       const faculty = await Faculty.findById(submitter.faculty);
       if (!faculty) {
-        throw new Error("Faculty not found");
+        throw new Error("This student is not associated with any faculty.");
       }
 
       const event = await Event.findById(contributionForm.event);
@@ -340,6 +340,13 @@ const contributionService = {
       const contribution = await Contribution.findById(contributionForm.id);
       if (!contribution) {
         throw new Error("Contribution not found");
+      }
+
+      const submitter = await User.findById(contribution.submitter);
+      const faculty = await Faculty.findById(submitter.faculty);
+
+      if (!faculty) {
+        throw new Error("This student is not associated with any faculty.");
       }
 
       // Check if title is duplicated

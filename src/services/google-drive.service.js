@@ -1,8 +1,6 @@
 const googleDriveConfig = require("../config/google.config");
 const { Readable } = require("stream");
 const { google } = require("googleapis");
-const archiver = require("archiver");
-const fs = require("fs");
 
 const documentFolderId = "1eU7ljTB6Gk5AfO3536au_BmcSbU7HA5t";
 

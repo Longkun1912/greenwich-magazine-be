@@ -310,7 +310,9 @@ const UserService = {
         await cloudinaryService.deleteUserImageFromCloudinary(user.email);
       }
 
-      return await User.findByIdAndDelete(userId);
+      user._id = userId;
+      console.log("Deleting user with converted ID: " + user._id);
+      return await user.deleteOne({ _id: userId });
     } catch (error) {
       throw new Error(error);
     }
