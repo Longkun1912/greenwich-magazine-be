@@ -110,6 +110,15 @@ const UserService = {
           throw new Error("There is already a manager for system");
         }
       }
+      if (user.role.name === "guest") {
+        const existingGuest = await User.findOne({
+          role: user.role,
+          faculty: user.faculty,
+        });
+        if (existingGuest) {
+          throw new Error("There is already a guest for this faculty");
+        }
+      }
       if (avatar_image) {
         const avatarName = await cloudinaryService.uploadUserAvatarToCloudinary(
           avatar_image.buffer,
@@ -216,6 +225,18 @@ const UserService = {
           existingCoordinator._id.toString() !== user._id.toString()
         ) {
           throw new Error("There is already a coordinator for this faculty");
+        }
+      }
+      if (user.role.name === "guest") {
+        const existingGuest = await User.findOne({
+          role: user.role,
+          faculty: user.faculty,
+        });
+        if (
+          existingGuest &&
+          existingGuest._id.toString() !== user._id.toString()
+        ) {
+          throw new Error("There is already a Guest for this faculty");
         }
       }
       if (user.role.name === "manager") {
