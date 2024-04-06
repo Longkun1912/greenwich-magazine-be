@@ -4,8 +4,12 @@ const googleDriveService = require("../services/google-drive.service");
 const Event = require("../models/event");
 const User = require("../models/user");
 const Faculty = require("../models/faculty");
+const Role = require('../models/role');
 const { v4: uuidv4 } = require("uuid");
-
+const nodemailer = require('nodemailer');
+const sendEmail = require('../utils/sendEmail');
+const fs = require('fs'); // Import module fs để đọc file
+const path = require('path');
 const handleFile = async (file, fileType, contribution) => {
   if (file) {
     // Delete old file
@@ -328,6 +332,33 @@ const contributionService = {
       }
 
       const createdContribution = await contribution.save();
+      const coordinatorRole = await Role.findOne({ name: 'coordinator' });
+      if (!coordinatorRole) {
+        throw new Error('Role "coordinator" not found');
+      }
+
+      const coordinatorRoleId = coordinatorRole._id;
+
+      const coordinator = await User.findOne({
+          role: coordinatorRoleId,
+          faculty: contribution.faculty
+        });
+        if (!coordinator) {
+          throw new Error('Coordinator not found');
+      }
+
+      const emailStudent = submitter.email;
+      const emailTemplatePath = path.resolve(__dirname, '../utils/emailTemplate.html');
+      const template = fs.readFileSync(emailTemplatePath, 'utf8');
+      const customTemplate = template.replace('email', emailStudent);
+      const customTemplate2 = customTemplate.replace('username', coordinator.username);
+      const customTemplate3 = customTemplate2.replace(/\[contributionLink\]/g, process.env.FE_URL);
+      await sendEmail({
+        from: `${process.env.MAIL_USER}`,
+        to: coordinator.email,
+        subject: 'New contribution has been created !!!',
+        html: customTemplate3
+      });
       return createdContribution;
     } catch (error) {
       console.error("Error creating contribution:", error);
