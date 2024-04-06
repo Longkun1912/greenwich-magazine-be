@@ -71,6 +71,8 @@ const User = require("./src/models/user");
 const Contribution = require("./src/models/contribution");
 const Event = require("./src/models/event");
 const Comment = require("./src/models/comment");
+const Chat = require("./src/models/chat");
+const Message = require("./src/models/message");
 
 require("./src/routes/auth.routes")(app);
 require("./src/routes/user.routes")(app);
@@ -80,6 +82,8 @@ require("./src/routes/contribution.routes")(app);
 require("./src/routes/event.routes")(app);
 require("./src/routes/comment.routes")(app);
 require("./src/routes/dashboard.routes")(app);
+require("./src/routes/chat.routes")(app);
+require("./src/routes/message.routes")(app);
 
 // Default route
 app.get("/", (req, res) => {

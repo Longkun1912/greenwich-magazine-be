@@ -1,13 +1,14 @@
 const Event = require("../models/event");
+const Contribution = require("../models/contribution");
 
 const eventService = {
   async createEvent(eventForm) {
     try {
-        const event = new Event({
-            name: eventForm.name,
-            description: eventForm.description,
-            firstDeadLineDate: eventForm.firstDeadLineDate,
-          });
+      const event = new Event({
+        name: eventForm.name,
+        description: eventForm.description,
+        firstDeadLineDate: eventForm.firstDeadLineDate,
+      });
       const createdEvent = await event.save();
       return createdEvent;
     } catch (error) {
@@ -54,6 +55,12 @@ const eventService = {
 
   async deleteEvent(id) {
     try {
+      // Set contributions associated with the event to have event as null
+      const contributions = await Contribution.find({ event: id });
+      for (const contribution of contributions) {
+        contribution.event = null;
+        await contribution.save();
+      }
       const deletedEvent = await Event.findByIdAndDelete(id);
       if (!deletedEvent) {
         throw new Error("Event not found");

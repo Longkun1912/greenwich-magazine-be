@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Contribution = require("./contribution");
 
 const eventSchema = new mongoose.Schema(
   {
@@ -17,7 +18,7 @@ const eventSchema = new mongoose.Schema(
     finalDeadLineDate: {
       type: Date,
       required: true,
-      default: function() {
+      default: function () {
         const firstDeadLineDate = new Date(this.firstDeadLineDate);
         firstDeadLineDate.setDate(firstDeadLineDate.getDate() + 14); // Add 14 days
         return firstDeadLineDate;

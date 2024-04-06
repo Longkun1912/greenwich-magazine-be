@@ -1,4 +1,6 @@
 const Faculty = require("../models/faculty");
+const Contribution = require("../models/contribution");
+const User = require("../models/user");
 const cloudinaryService = require("../services/cloudinary.service");
 
 const facultyService = {
@@ -96,14 +98,25 @@ const facultyService = {
         throw new Error("Faculty not found");
       }
 
-      console.log("Image:", faculty.image);
-
       if (faculty.image) {
         await cloudinaryService.deleteFacultyImageFromCloudinary(faculty.name);
       }
 
-      await Faculty.findByIdAndDelete(id);
+      // Set contributions associated with the faculty to have faculty as null
+      const contributions = await Contribution.find({ faculty: id });
+      for (const contribution of contributions) {
+        contribution.faculty = null;
+        await contribution.save();
+      }
 
+      // Set users associated with the faculty to have faculty as null
+      const users = await User.find({ faculty: id });
+      for (const user of users) {
+        user.faculty = null;
+        await user.save();
+      }
+
+      await Faculty.findByIdAndDelete(id);
       return { message: "Successfully deleted faculty" };
     } catch (error) {
       console.error("Error deleting faculty:", error);
