@@ -1,6 +1,6 @@
-// hhhmmm
 const Controller = require("../controllers/faculty.controller");
 const multer = require("multer");
+const { authJwt } = require("../middleware");
 
 const upload = multer();
 
@@ -19,6 +19,7 @@ module.exports = function (app) {
   // API create faculty
   app.post(
     "/api/faculty/create",
+    [authJwt.verifyToken, authJwt.isAdmin],
     upload.single("image"),
     Controller.createFaculty
   );
@@ -26,10 +27,14 @@ module.exports = function (app) {
   // API update faculty
   app.put(
     "/api/faculty/update/:id",
+    [authJwt.verifyToken, authJwt.isAdmin],
     upload.single("image"),
     Controller.updateFaculty
   );
 
   // API delete faculty
-  app.delete("/api/faculty/delete/:id", Controller.deleteFaculty);
+  app.delete(
+    "/api/faculty/delete/:id", 
+    [authJwt.verifyToken, authJwt.isAdmin],
+    Controller.deleteFaculty);
 };
