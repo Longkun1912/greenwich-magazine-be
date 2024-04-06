@@ -169,6 +169,31 @@ isAdminOrManager = async (req, res, next) => {
   }
 };
 
+isCoordinatorOrStudent = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).send({ message: "User not found!" });
+    }
+
+    const roles = await Role.find({ _id: { $in: user.role } });
+    if (!roles) {
+      return res.status(404).send({ message: "Roles not found!" });
+    }
+
+    for (let i = 0; i < roles.length; i++) {
+      if (roles[i].name === "coordinator" || roles[i].name === "student") {
+        next();
+        return;
+      }
+    }
+
+    res.status(403).send({ message: "Require Coordinator or Student Role!" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
 const authJwt = {
   verifyToken,
   isAdmin,
@@ -177,6 +202,7 @@ const authJwt = {
   isStudent,
   isGuest,
   isAdminOrManager,
+  isCoordinatorOrStudent,
 };
 
 module.exports = authJwt;

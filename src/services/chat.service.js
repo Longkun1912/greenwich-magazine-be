@@ -1,5 +1,8 @@
 const Chat = require("../models/chat");
 const User = require("../models/user");
+const Faculty = require("../models/faculty");
+const Role = require("../models/role");
+const Message = require("../models/message");
 
 const ChatService = {
   async createChat(user1Id, user2Id) {
@@ -18,38 +21,56 @@ const ChatService = {
     }
   },
 
-  async getCurrentChats(userId) {
+  async getStudentsInFacultyForChat(currentUserId) {
     try {
-      const chats = await Chat.find({
-        $or: [{ user1: userId }, { user2: userId }],
-      })
-        .populate("user1")
-        .populate("user2")
-        .sort({ updatedAt: -1 });
-      return chats.map((chat) => {
-        // Return chats and the latest message in each chat
+      const currentUser = await User.findById(currentUserId);
+      const faculty = await Faculty.findById(currentUser.faculty);
+
+      if (!faculty) {
+        throw new Error("Faculty not found");
+      }
+
+      const studentRole = await Role.findOne({ name: "student" });
+
+      if (!studentRole) {
+        throw new Error("Student role not found");
+      }
+
+      const students = await User.find({
+        faculty: faculty._id,
+        role: studentRole._id,
+      });
+
+      return students.map((student) => {
+        // Find the chat with the student
+        const chat = Chat.findOne({
+          $or: [
+            { user1: currentUser._id, user2: student._id },
+            { user1: student._id, user2: currentUser._id },
+          ],
+        });
+
+        if (!chat) {
+          return {
+            _id: student._id,
+            name: student.username,
+            email: student.email,
+            faculty: student.faculty,
+          };
+        }
+
         const latestMessage = chat.messages[0].content;
+        const updatedAt = chat.updatedAt;
+
         return {
-          _id: chat._id,
-          user1: chat.user1,
-          user2: chat.user2,
+          _id: student._id,
+          name: student.username,
+          email: student.email,
+          faculty: student.faculty,
           latestMessage,
-          updatedAt: chat.updatedAt,
+          updatedAt,
         };
       });
-    } catch (error) {
-      throw new Error(error);
-    }
-  },
-
-  async deleteChat(chatId) {
-    try {
-      const chat = await Chat.findById(chatId);
-      if (!chat) {
-        throw new Error("Chat not found");
-      }
-      chat._id = chatId;
-      return await chat.deleteOne({ _id: chatId });
     } catch (error) {
       throw new Error(error);
     }

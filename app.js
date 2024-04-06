@@ -83,7 +83,6 @@ require("./src/routes/event.routes")(app);
 require("./src/routes/comment.routes")(app);
 require("./src/routes/dashboard.routes")(app);
 require("./src/routes/chat.routes")(app);
-require("./src/routes/message.routes")(app);
 
 // Default route
 app.get("/", (req, res) => {

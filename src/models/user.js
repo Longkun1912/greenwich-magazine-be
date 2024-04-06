@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Contribution = require("./contribution");
+const Chat = require("./chat");
 const googleDriveService = require("../services/google-drive.service");
 const cloudinaryService = require("../services/cloudinary.service");
 
@@ -48,8 +49,10 @@ userSchema.pre(
   async function (next) {
     try {
       console.log("Deleting user with ID: " + this._id);
+
+      // Delete all contributions created by this user
       const contributions = await Contribution.find({ submitter: this._id });
-      console.log("Size: " + contributions.length);
+      console.log("Contribution size: " + contributions.length);
       for (const contribution of contributions) {
         // Delete contribution image and document
         if (contribution.image) {
@@ -68,6 +71,17 @@ userSchema.pre(
         }
         await contribution.deleteOne();
         console.log("Contribution created by user has been deleted.");
+
+        // Delete chats associated with this user
+        const chats = await Chat.find({
+          $or: [{ user1: this._id }, { user2: this._id }],
+        });
+        console.log("Chat size: " + chats.length);
+
+        for (const chat of chats) {
+          await chat.deleteOne({ _id: chat._id });
+        }
+        console.log("Chats associated with user have been deleted.");
       }
       next();
     } catch (error) {

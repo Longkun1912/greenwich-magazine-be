@@ -10,21 +10,41 @@ module.exports = function (app) {
     next();
   });
 
+  // Chat management
   app.post(
     "/api/chat-management/chat",
-    [authJwt.verifyToken],
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
     controller.createChat
   );
 
   app.get(
-    "/api/chat-management/chats/:userId",
-    [authJwt.verifyToken],
-    controller.getCurrentChats
+    "/api/chat-management/students/:currentUserId",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.getStudentsInFacultyForChat
+  );
+
+  // Message management
+  app.post(
+    "/api/chat-management/message",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.createMessage
+  );
+
+  app.get(
+    "/api/chat-management/messages/:chatId",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.getMessages
+  );
+
+  app.put(
+    "/api/chat-management/message/:messageId",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.updateMessage
   );
 
   app.delete(
-    "/api/chat-management/chat/:chatId",
-    [authJwt.verifyToken],
-    controller.deleteChat
+    "/api/chat-management/message/:messageId",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.deleteMessage
   );
 };
