@@ -16,10 +16,10 @@ const commentController = {
         }
       },    
 
-  async getAllComments(req, res) {
+  async getCommentByContribution(req, res) {
     try {
-      const comments = await commentService.getAllComments();
-      res.status(200).json(comments);
+      const comment = await commentService.getCommentByContribution(req.params.idContribution);
+      res.status(200).json(comment);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -27,8 +27,8 @@ const commentController = {
 
   async updateComment(req, res) {
     try {
-      const commentId = req.params.id; // Assuming the comment ID is passed as a route parameter
-      const commentDetails = req.body; // Assumed that updated comment details are sent in the request body
+      const commentId = req.params.id; 
+      const commentDetails = req.body; 
       const updatedComment = await commentService.updateComment(commentId, commentDetails);
       res.status(200).json(updatedComment);
     } catch (error) {
@@ -38,13 +38,22 @@ const commentController = {
 
   async deleteComment(req, res) {
     try {
-      const commentId = req.params.id; // Assuming the comment ID is passed as a route parameter
+      const commentId = req.params.id; 
       const result = await commentService.deleteComment(commentId);
       res.status(200).json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
+
+  async viewCommentsForStudent(res, req, idUser, idContribution) {
+    try {
+      const comment = await commentService.viewCommentsForStudent(idUser, idContribution);
+      res.json(comment);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 };
 
 module.exports = commentController;

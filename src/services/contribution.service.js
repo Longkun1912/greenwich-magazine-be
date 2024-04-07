@@ -101,7 +101,6 @@ const contributionService = {
           submitter: submitter.email,
           image: contributions[i].image,
           document: contributions[i].document,
-          state: contributions[i].state, 
         };
 
         if (event) {
@@ -306,7 +305,6 @@ const contributionService = {
         submitter: contributionForm.submitter,
         faculty: faculty._id,
         event: event._id,
-        state: contributionForm.state || "private",
       });
 
       const imageFile = files["image"] ? files["image"][0] : null;

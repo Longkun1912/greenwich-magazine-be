@@ -17,18 +17,32 @@ module.exports = function (app) {
     commentController.createComment
   ); 
   app.get(
-    "/api/comment-management/comments",
-    [authJwt.verifyToken],
-    commentController.getAllComments
+    "/api/comment-management/comment/:idContribution",
+    [authJwt.verifyToken, authJwt.isCoordinator],
+    commentController.getCommentByContribution
   ); 
   app.put(
-    "/api/comment-management/comments/:id",
-    [authJwt.verifyToken],
+    "/api/comment-management/comment/:id",
+    [authJwt.verifyToken, authJwt.isCoordinator],
     commentController.updateComment
   ); 
   app.delete(
     "/api/comment-management/comments/:id",
-    [authJwt.verifyToken],
+    [authJwt.verifyToken, authJwt.isCoordinator],
     commentController.deleteComment
   ); 
+
+  app.get(
+    "/api/student/comment",
+    [authJwt.verifyToken, authJwt.isStudent],
+    async (req, res) => {
+      try {
+        const { idUser, idContribution } = req.query;
+        await commentController.viewCommentsForStudent(res, req,idUser, idContribution);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
 };

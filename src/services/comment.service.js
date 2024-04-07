@@ -1,11 +1,27 @@
 const Comment = require("../models/comment");
+const Contribution = require('../models/contribution');
+const moment = require('moment'); 
 
 const commentService = {
   async createComment(commentForm, userID, contributionID) {
     try {
+      const existingContribution = await Contribution.findById(contributionID);
+      if (!existingContribution) {
+        throw new Error("Contribution not found.");
+      }
+      const createdAt = existingContribution.createdAt;
+    const daysSinceCreation = moment().diff(createdAt, 'days');
+    if (daysSinceCreation > 14) {
+      throw new Error("Cannot add comment. Contribution is older than 14 days.");
+    }
+      const existingCommentCount = await Comment.countDocuments({ contribution: contributionID });
+    
+      if (existingCommentCount > 0) {
+        throw new Error("Contribution already has comment.");
+      }
       const comment = new Comment({
         content: commentForm.content,
-        submitter: userID,
+        coordinator: userID,
         contribution: contributionID,
       });
       const createdComment = await comment.save();
@@ -15,15 +31,17 @@ const commentService = {
       throw error;
     }
   },
+  
 
-  async getAllComments() {
+  async getCommentByContribution(contributionID) {
     try {
-      return await Comment.find();
+      const comments = await Comment.find({ contribution: contributionID });
+      return comments;
     } catch (error) {
       console.error("Error fetching comments:", error);
       throw error;
     }
-  },
+  },  
 
   async updateComment(id, commentDetails) {
     try {
@@ -31,7 +49,6 @@ const commentService = {
       if (!comment) {
         throw new Error("Comment not found");
       }
-
       if (commentDetails.content) {
         comment.content = commentDetails.content;
       }
@@ -56,6 +73,28 @@ const commentService = {
       throw error;
     }
   },
+
+  async viewCommentsForStudent(userID, contributionID) {
+    console.log(contributionID);
+    console.log(userID);
+    try {
+      const contribution = await Contribution.findById(contributionID);
+      if (!contribution) {
+        throw new Error("Contribution not found.");
+      }
+  
+      console.log(contribution.submitter);
+      if (contribution.submitter.toString() !== userID) {
+        throw new Error("You are not authorized to view comments for this contribution.");
+      }
+      const comments = await Comment.find({ contribution: contributionID });
+      return comments;
+    } catch (error) {
+      console.error("Error fetching comments for student:", error);
+      throw error;
+    }
+  }
+  
 };
 
 module.exports = commentService;
