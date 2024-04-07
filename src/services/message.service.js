@@ -1,5 +1,6 @@
 const Chat = require("../models/chat");
 const Message = require("../models/message");
+const User = require("../models/user");
 
 const MessageService = {
   async createMessage(chatId, sender, content) {
@@ -17,7 +18,19 @@ const MessageService = {
       const messages = await Message.find({ chat: chatId }).sort({
         createdAt: 1,
       });
-      return messages;
+      return Promise.all(
+        messages.map(async (message) => {
+          const sender = await User.findById(message.sender);
+
+          return {
+            id: message._id,
+            chat: message.chat,
+            sender: sender,
+            content: message.content,
+            updatedAt: message.updatedAt,
+          };
+        })
+      );
     } catch (error) {
       throw new Error(error);
     }
@@ -31,6 +44,7 @@ const MessageService = {
       }
 
       message.content = content;
+      message.updatedAt = new Date();
       return await message.save();
     } catch (error) {
       throw new Error(error);

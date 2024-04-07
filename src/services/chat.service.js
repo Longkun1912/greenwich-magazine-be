@@ -41,36 +41,56 @@ const ChatService = {
         role: studentRole._id,
       });
 
-      return students.map((student) => {
-        // Find the chat with the student
-        const chat = Chat.findOne({
-          $or: [
-            { user1: currentUser._id, user2: student._id },
-            { user1: student._id, user2: currentUser._id },
-          ],
-        });
+      const chats = await Promise.all(
+        students.map(async (student) => {
+          // Find the chat with the student
+          const existedChat = await Chat.findOne({
+            $or: [
+              { user1: currentUser._id, user2: student._id },
+              { user1: student._id, user2: currentUser._id },
+            ],
+          });
 
-        if (!chat) {
-          return {
-            _id: student._id,
-            name: student.username,
-            email: student.email,
-            faculty: student.faculty,
-          };
-        }
+          if (existedChat) {
+            return existedChat;
+          } else {
+            // Create a new chat with the student
+            return await Chat.create({
+              user1: currentUser._id,
+              user2: student._id,
+            });
+          }
+        })
+      );
 
-        const latestMessage = chat.messages[0].content;
-        const updatedAt = chat.updatedAt;
+      // Get latest message for each chat if it exists
+      return await Promise.all(
+        chats.map(async (chat) => {
+          if (chat) {
+            const latestMessage = await Message.findOne({
+              chat: chat._id,
+            }).sort({ createdAt: -1 });
 
-        return {
-          _id: student._id,
-          name: student.username,
-          email: student.email,
-          faculty: student.faculty,
-          latestMessage,
-          updatedAt,
-        };
-      });
+            const updatedAt = latestMessage
+              ? latestMessage.updatedAt
+              : chat.updatedAt;
+
+            // Get the other user in the chat
+            const otherUser = currentUser._id.equals(chat.user1._id)
+              ? chat.user2
+              : chat.user1;
+
+            const otherStudent = await User.findById(otherUser);
+
+            return {
+              chat: chat._id,
+              student: otherStudent,
+              latestMessage: latestMessage ? latestMessage.content : "",
+              updatedAt,
+            };
+          }
+        })
+      );
     } catch (error) {
       throw new Error(error);
     }

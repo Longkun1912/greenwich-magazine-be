@@ -1,5 +1,8 @@
 const { authJwt } = require("../middleware");
 const controller = require("../controllers/chat.controller");
+const multer = require("multer");
+
+const upload = multer();
 
 module.exports = function (app) {
   app.use(function (req, res, next) {
@@ -27,6 +30,7 @@ module.exports = function (app) {
   app.post(
     "/api/chat-management/message",
     [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    upload.none(),
     controller.createMessage
   );
 
@@ -39,6 +43,7 @@ module.exports = function (app) {
   app.put(
     "/api/chat-management/message/:messageId",
     [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    upload.none(),
     controller.updateMessage
   );
 
