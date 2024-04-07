@@ -20,10 +20,18 @@ module.exports = function (app) {
     controller.createChat
   );
 
+  // Coordinator contacts students in the same faculty
   app.get(
     "/api/chat-management/students/:currentUserId",
     [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
     controller.getStudentsInFacultyForChat
+  );
+
+  // Student contacts coordinator
+  app.get(
+    "/api/chat-management/coordinator/:currentUserId",
+    [authJwt.verifyToken, authJwt.isCoordinatorOrStudent],
+    controller.contactWithCoordinator
   );
 
   // Message management

@@ -12,6 +12,7 @@ exports.createChat = async (req, res) => {
   }
 };
 
+// Coordinator contacts students in the same faculty
 exports.getStudentsInFacultyForChat = async (req, res) => {
   try {
     const { currentUserId } = req.params; // Accessing route parameters
@@ -19,6 +20,16 @@ exports.getStudentsInFacultyForChat = async (req, res) => {
       currentUserId
     );
     res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.contactWithCoordinator = async (req, res) => {
+  try {
+    const { currentUserId } = req.params; // Accessing route parameters
+    const coordinatorChat = await ChatService.contactCoordinator(currentUserId);
+    res.status(200).json(coordinatorChat);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
