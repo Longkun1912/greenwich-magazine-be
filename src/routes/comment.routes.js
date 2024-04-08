@@ -27,7 +27,7 @@ module.exports = function (app) {
     commentController.updateComment
   ); 
   app.delete(
-    "/api/comment-management/comments/:id",
+    "/api/comment-management/comment/:id",
     [authJwt.verifyToken, authJwt.isCoordinator],
     commentController.deleteComment
   ); 
