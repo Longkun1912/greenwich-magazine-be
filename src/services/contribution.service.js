@@ -290,6 +290,7 @@ const contributionService = {
         submitter: contributionForm.submitter,
         faculty: faculty._id,
         event: event._id,
+        state: contributionForm.state || "private",
       });
 
       const imageFile = files["image"] ? files["image"][0] : null;
