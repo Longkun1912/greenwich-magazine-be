@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
+const cloudinaryService = require("../services/cloudinary.service");
+const googleDriveService = require("../services/google-drive.service");
+const Comment = require("./comment");
 
 const contributionSchema = new mongoose.Schema(
   {
@@ -24,12 +27,11 @@ const contributionSchema = new mongoose.Schema(
       default: "pending",
       required: true,
     },
-    state:{
+    state: {
       type: String,
       enum: ["private", "public"],
       default: "public",
       required: true,
-
     },
     submitter: {
       type: mongoose.Schema.Types.ObjectId,
@@ -49,6 +51,42 @@ const contributionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  }
+);
+
+contributionSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      console.log("Deleting contribution with ID: " + this._id);
+
+      // Delete contribution image and document
+      if (this.image) {
+        console.log("Deleting contribution image...");
+        await cloudinaryService.deleteUserImageFromCloudinary(this.title);
+      }
+      if (this.document) {
+        console.log("Deleting contribution document...");
+        const authClient = await googleDriveService.authorizeGoogleDrive();
+        await googleDriveService.deleteFileFromGoogleDrive(
+          authClient,
+          this.document
+        );
+      }
+
+      // Delete comment that belongs to this contribution
+      const singleFeedback = await Comment.findOne({ contribution: this._id });
+      if (singleFeedback) {
+        await singleFeedback.deleteOne();
+      }
+      console.log(
+        "Deleted comment that belongs to this contribution successfully."
+      );
+      next();
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
