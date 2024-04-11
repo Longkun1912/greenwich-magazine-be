@@ -55,22 +55,37 @@ const eventService = {
 
   async deleteEvent(id) {
     try {
-      // Set contributions associated with the event to have event as null
-      const contributions = await Contribution.find({ event: id });
-      for (const contribution of contributions) {
-        contribution.event = null;
-        await contribution.save();
-      }
-      const deletedEvent = await Event.findByIdAndDelete(id);
-      if (!deletedEvent) {
-        throw new Error("Event not found");
-      }
-      return { message: "Successfully deleted event" };
+       
+        const eventToDelete = await Event.findById(id);
+        if (!eventToDelete) {
+            throw new Error("Event not found");
+        }
+        if (eventToDelete.name === "Default Event") {
+            throw new Error("Cannot delete Default Event");
+        }
+        const contributions = await Contribution.find({ event: id });
+
+        const defaultEvent = await Event.findOne({ name: "Default Event" });
+        if (!defaultEvent) {
+            throw new Error("Default Event not found");
+        }
+        const defaultEventId = defaultEvent._id;
+        for (const contribution of contributions) {
+            contribution.event = defaultEventId;
+            await contribution.save();
+        }
+
+        const deletedEvent = await Event.findByIdAndDelete(id);
+        if (!deletedEvent) {
+            throw new Error("Event not found");
+        }
+        
+        return { message: "Successfully deleted event" };
     } catch (error) {
-      console.error("Error deleting event:", error);
-      throw error;
+        console.error("Error deleting event:", error);
+        throw error;
     }
-  },
+},
   async updateEventForCoordinator(id, eventDetails) {
     try {
       const event = await Event.findById(id);
