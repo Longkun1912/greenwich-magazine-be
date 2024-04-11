@@ -6,17 +6,20 @@ const cloudinaryService = require("../services/cloudinary.service");
 const facultyService = {
   async createFaculty(facultyForm, imageFile) {
     try {
+      // Kiểm tra xem faculty đã tồn tại trong cơ sở dữ liệu chưa
+      const existingFaculty = await Faculty.findOne({ name: facultyForm.name });
+      if (existingFaculty) {
+        throw new Error('Faculty with this name already exists.');
+      }
       // Tạo faculty mới
       const faculty = new Faculty({
         name: facultyForm.name,
         description: facultyForm.description,
       });
-
       const formattedImageName = facultyForm.name
         .split(" ")
         .join("")
         .toLowerCase();
-
       // Nếu có ảnh được tải lên, thực hiện upload lên Cloudinary
       if (imageFile) {
         const imageName =
@@ -26,13 +29,12 @@ const facultyService = {
           );
         faculty.image = imageName;
       }
-
       // Lưu faculty vào cơ sở dữ liệu
       const createdFaculty = await faculty.save();
       return createdFaculty;
     } catch (error) {
       console.error("Error creating faculty:", error);
-      throw error;
+      throw error.response.data;
     }
   },
 
