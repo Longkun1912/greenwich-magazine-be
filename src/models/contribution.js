@@ -11,15 +11,11 @@ const contributionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    content: {
-      type: String,
-      required: true,
+    documents: {
+      type: [String],
     },
-    document: {
-      type: String,
-    },
-    image: {
-      type: String,
+    images: {
+      type: [String],
     },
     status: {
       type: String,
@@ -59,30 +55,26 @@ contributionSchema.pre(
   { document: true, query: false },
   async function (next) {
     try {
-      console.log("Deleting contribution with ID: " + this._id);
-
       // Delete contribution image and document
-      if (this.image) {
-        console.log("Deleting contribution image...");
-        await cloudinaryService.deleteUserImageFromCloudinary(this.title);
+      console.log("Deleting contribution image...");
+      for (const image of this.images) {
+        await cloudinaryService.deleteContributionImageFromCloudinary(image);
       }
-      if (this.document) {
-        console.log("Deleting contribution document...");
-        const authClient = await googleDriveService.authorizeGoogleDrive();
+      console.log("Deleted contribution image successfully.");
+      console.log("Deleting contribution document...");
+      const authClient = await googleDriveService.authorizeGoogleDrive();
+      for (const document of this.documents) {
         await googleDriveService.deleteFileFromGoogleDrive(
           authClient,
-          this.document
+          document
         );
       }
+      console.log("Deleted contribution document successfully.");
 
-      // Delete comment that belongs to this contribution
-      const singleFeedback = await Comment.findOne({ contribution: this._id });
-      if (singleFeedback) {
-        await singleFeedback.deleteOne();
-      }
-      console.log(
-        "Deleted comment that belongs to this contribution successfully."
-      );
+      // Delete comments of the contribution
+      console.log("Deleting comments of the contribution...");
+      await Comment.deleteMany({ contribution: this._id });
+      console.log("Deleted comments of the contribution successfully.");
       next();
     } catch (error) {
       next(error);

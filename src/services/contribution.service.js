@@ -6,29 +6,12 @@ const User = require("../models/user");
 const Faculty = require("../models/faculty");
 const Role = require("../models/role");
 const { v4: uuidv4 } = require("uuid");
-const nodemailer = require("nodemailer");
 const sendEmail = require("../utils/sendEmail");
-const fs = require("fs"); // Import module fs để đọc file
+const fs = require("fs");
 const path = require("path");
-const handleFile = async (file, fileType, contribution) => {
-  if (file) {
-    // Delete old file
-    if (contribution[fileType]) {
-      await cloudinaryService[
-        `deleteContribution${
-          fileType.charAt(0).toUpperCase() + fileType.slice(1)
-        }FromCloudinary`
-      ](contribution.title);
-    }
 
-    // Upload new file
-    const fileName = await cloudinaryService[
-      `uploadContribution${
-        fileType.charAt(0).toUpperCase() + fileType.slice(1)
-      }ToCloudinary`
-    ](file.buffer, contribution.title);
-    contribution[fileType] = fileName;
-  }
+const getFilename = (url) => {
+  return decodeURIComponent(url.split("/").pop());
 };
 
 const contributionService = {
@@ -45,35 +28,34 @@ const contributionService = {
       const contribution = new Contribution({
         _id: uuidv4(),
         title: contributionForm.title,
-        content: contributionForm.content,
         status: contributionForm.status || "pending",
         submitter: contributionForm.submitter,
         event: contributionForm.event,
         faculty: contributionForm.faculty,
       });
 
-      const imageFile = files["image"] ? files["image"][0] : null;
-      const documentFile = files["document"] ? files["document"][0] : null;
-
-      const fileTitle = contribution.title;
-
-      if (documentFile) {
+      // Handle document files
+      if (files["document"]) {
         const authClient = await googleDriveService.authorizeGoogleDrive();
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
-        );
-        console.log("Document name:", documentName);
-        contribution.document = documentName;
+        for (const documentFile of files["document"]) {
+          const documentName = await googleDriveService.uploadFileToGoogleDrive(
+            authClient,
+            documentFile
+          );
+          contribution.documents.push(documentName);
+        }
       }
 
-      if (imageFile) {
-        const imageName =
-          await cloudinaryService.uploadContributionImageToCloudinary(
-            imageFile.buffer,
-            fileTitle
-          );
-        contribution.image = imageName;
+      // Handle image files
+      if (files["image"]) {
+        for (const imageFile of files["image"]) {
+          const imageName =
+            await cloudinaryService.uploadContributionImageToCloudinary(
+              imageFile.buffer,
+              imageFile.originalname
+            );
+          contribution.images.push(imageName);
+        }
       }
 
       const createdContribution = await contribution.save();
@@ -96,11 +78,10 @@ const contributionService = {
         const contributionInfo = {
           id: contributions[i]._id,
           title: contributions[i].title,
-          content: contributions[i].content,
           status: contributions[i].status,
           submitter: submitter.email,
-          image: contributions[i].image,
-          document: contributions[i].document,
+          images: contributions[i].images,
+          documents: contributions[i].documents,
         };
 
         if (event) {
@@ -134,7 +115,6 @@ const contributionService = {
       }
 
       contribution.title = contributionForm.title;
-      contribution.content = contributionForm.content;
       contribution.status = contributionForm.status || "pending";
 
       if (contributionForm.event) {
@@ -155,29 +135,132 @@ const contributionService = {
         }
       }
 
-      const imageFile = files["image"] ? files["image"][0] : null;
-      const documentFile = files["document"] ? files["document"][0] : null;
-
-      if (documentFile) {
+      // Handle document files
+      if (files["document"]) {
         const authClient = await googleDriveService.authorizeGoogleDrive();
-        await googleDriveService.deleteFileFromGoogleDrive(
-          authClient,
-          contribution.document
+
+        // Compare the new document files with the old ones, check if there are any files that need to be deleted
+        const oldDocumentFileNames = contribution.documents.map((document) =>
+          document.split("/").pop()
         );
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
+
+        const newDocumentFileNames = files["document"].map(
+          (file) => file.originalname
         );
-        console.log("Document name:", documentName);
-        contribution.document = documentName;
+
+        // Console.log the old and new document file names
+        console.log("Old document file names:", oldDocumentFileNames);
+        console.log("New document file names:", newDocumentFileNames);
+
+        for (const oldDocumentFileName of oldDocumentFileNames) {
+          // If the old document file is not included in the new document files, delete it
+          if (!newDocumentFileNames.includes(oldDocumentFileName)) {
+            console.log(
+              "Deleting document file that does not included:",
+              oldDocumentFileName
+            );
+            await googleDriveService.deleteFileFromGoogleDrive(
+              authClient,
+              oldDocumentFileName
+            );
+            contribution.documents = contribution.documents.filter(
+              (document) => document !== oldDocumentFileName
+            );
+          }
+        }
+
+        // If the new document file is not included in the old document files, upload it
+        // But if the new document file is included in the old document files, do nothing
+        for (const documentFile of files["document"]) {
+          if (
+            !oldDocumentFileNames
+              .map((name) => name.toLowerCase())
+              .includes(documentFile.originalname.toLowerCase())
+          ) {
+            console.log(
+              "Uploading new document file:",
+              documentFile.originalname
+            );
+            const documentName =
+              await googleDriveService.uploadFileToGoogleDrive(
+                authClient,
+                documentFile
+              );
+            contribution.documents.push(documentName);
+          }
+        }
       }
 
-      if (imageFile) {
-        await handleFile(imageFile, "image", contribution);
+      // Handle image files
+      if (files["image"]) {
+        // Compare the new image files with the old ones, check if there are any files that need to be deleted
+        const oldImageFiles = contribution.images.map((image) =>
+          decodeURIComponent(image.split("/").pop())
+        );
+
+        const newImageFiles = files["image"].map((file) =>
+          file.originalname.split("/").pop()
+        );
+
+        // Console.log the old and new image file names
+        console.log("Old image file names:", oldImageFiles);
+        console.log("New image file names:", newImageFiles);
+
+        for (const oldImageFile of oldImageFiles) {
+          // If the old image file is not included in the new image files, delete it
+          if (!newImageFiles.includes(oldImageFile)) {
+            console.log(
+              "Deleting image file that does not included:",
+              oldImageFile
+            );
+            await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
+              oldImageFile
+            );
+            contribution.images = contribution.images.filter(
+              (image) => image.split("/").pop() !== oldImageFile
+            );
+          }
+        }
+
+        // If the new image file is not included in the old image files, upload it
+        // But if the new image file is included in the old image files, do nothing
+        for (const imageFile of files["image"]) {
+          if (
+            !oldImageFiles
+              .map((name) => name.toLowerCase())
+              .includes(imageFile.originalname.toLowerCase())
+          ) {
+            console.log("Uploading new image file:", imageFile.originalname);
+            const imageName =
+              await cloudinaryService.uploadContributionImageToCloudinary(
+                imageFile.buffer,
+                imageFile.originalname
+              );
+            contribution.images.push(imageName);
+          }
+        }
       }
 
-      const updatedContribution = await contribution.save();
-      return updatedContribution;
+      // Update contribution images and documents not to contain any duplicated items
+      contribution.images = contribution.images.filter((image, index, self) => {
+        const filename = getFilename(image);
+        const firstIndex = self.findIndex(
+          (img) => getFilename(img) === filename
+        );
+        return firstIndex === index;
+      });
+
+      contribution.documents = contribution.documents.filter(
+        (document, index, self) => {
+          const filename = getFilename(document);
+          const firstIndex = self.findIndex(
+            (doc) => getFilename(doc) === filename
+          );
+          return firstIndex === index;
+        }
+      );
+
+      return await contribution.save();
     } catch (error) {
       console.error("Error updating contribution:", error);
       throw error;
@@ -214,12 +297,11 @@ const contributionService = {
         const contributionInfo = {
           id: contributions[i]._id,
           title: contributions[i].title,
-          content: contributions[i].content,
           status: contributions[i].status,
           submitter: submitter.email,
           event: event.name,
-          image: contributions[i].image,
-          document: contributions[i].document,
+          images: contributions[i].images,
+          documents: contributions[i].documents,
         };
         contributionInfos.push(contributionInfo);
       }
@@ -285,7 +367,6 @@ const contributionService = {
       const contribution = new Contribution({
         _id: uuidv4(),
         title: contributionForm.title,
-        content: contributionForm.content,
         status: contributionForm.status || "pending",
         submitter: contributionForm.submitter,
         faculty: faculty._id,
@@ -293,28 +374,28 @@ const contributionService = {
         state: contributionForm.state || "private",
       });
 
-      const imageFile = files["image"] ? files["image"][0] : null;
-      const documentFile = files["document"] ? files["document"][0] : null;
-
-      const fileTitle = contribution.title;
-
-      if (documentFile) {
+      // Handle document files
+      if (files["document"]) {
         const authClient = await googleDriveService.authorizeGoogleDrive();
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
-        );
-        console.log("Document name:", documentName);
-        contribution.document = documentName;
+        for (const documentFile of files["document"]) {
+          const documentName = await googleDriveService.uploadFileToGoogleDrive(
+            authClient,
+            documentFile
+          );
+          contribution.documents.push(documentName);
+        }
       }
 
-      if (imageFile) {
-        const imageName =
-          await cloudinaryService.uploadContributionImageToCloudinary(
-            imageFile.buffer,
-            fileTitle
-          );
-        contribution.image = imageName;
+      // Handle image files
+      if (files["image"]) {
+        for (const imageFile of files["image"]) {
+          const imageName =
+            await cloudinaryService.uploadContributionImageToCloudinary(
+              imageFile.buffer,
+              imageFile.originalname
+            );
+          contribution.images.push(imageName);
+        }
       }
 
       const createdContribution = await contribution.save();
@@ -401,33 +482,132 @@ const contributionService = {
           contribution.event = contributionForm.event;
         }
       }
-
-      // Cập nhật thông tin của contribution
       contribution.title = contributionForm.title;
-      contribution.content = contributionForm.content;
 
-      // Xử lý tệp ảnh và tệp tài liệu
-      const imageFile = files["image"] ? files["image"][0] : null;
-      const documentFile = files["document"] ? files["document"][0] : null;
-
-      if (documentFile) {
+      // Handle document files
+      if (files["document"]) {
         const authClient = await googleDriveService.authorizeGoogleDrive();
-        await googleDriveService.deleteFileFromGoogleDrive(
-          authClient,
-          contribution.document
+
+        // Compare the new document files with the old ones, check if there are any files that need to be deleted
+        const oldDocumentFileNames = contribution.documents.map((document) =>
+          document.split("/").pop()
         );
 
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
+        const newDocumentFileNames = files["document"].map(
+          (file) => file.originalname
         );
-        console.log("Document name:", documentName);
-        contribution.document = documentName;
+
+        // Console.log the old and new document file names
+        console.log("Old document file names:", oldDocumentFileNames);
+        console.log("New document file names:", newDocumentFileNames);
+
+        for (const oldDocumentFileName of oldDocumentFileNames) {
+          // If the old document file is not included in the new document files, delete it
+          if (!newDocumentFileNames.includes(oldDocumentFileName)) {
+            console.log(
+              "Deleting document file that does not included:",
+              oldDocumentFileName
+            );
+            await googleDriveService.deleteFileFromGoogleDrive(
+              authClient,
+              oldDocumentFileName
+            );
+            contribution.documents = contribution.documents.filter(
+              (document) => document !== oldDocumentFileName
+            );
+          }
+        }
+
+        // If the new document file is not included in the old document files, upload it
+        // But if the new document file is included in the old document files, do nothing
+        for (const documentFile of files["document"]) {
+          if (
+            !oldDocumentFileNames
+              .map((name) => name.toLowerCase())
+              .includes(documentFile.originalname.toLowerCase())
+          ) {
+            console.log(
+              "Uploading new document file:",
+              documentFile.originalname
+            );
+            const documentName =
+              await googleDriveService.uploadFileToGoogleDrive(
+                authClient,
+                documentFile
+              );
+            contribution.documents.push(documentName);
+          }
+        }
       }
 
-      if (imageFile) {
-        await handleFile(imageFile, "image", contribution);
+      // Handle image files
+      if (files["image"]) {
+        // Compare the new image files with the old ones, check if there are any files that need to be deleted
+        const oldImageFiles = contribution.images.map((image) =>
+          decodeURIComponent(image.split("/").pop())
+        );
+
+        const newImageFiles = files["image"].map((file) =>
+          file.originalname.split("/").pop()
+        );
+
+        // Console.log the old and new image file names
+        console.log("Old image file names:", oldImageFiles);
+        console.log("New image file names:", newImageFiles);
+
+        for (const oldImageFile of oldImageFiles) {
+          // If the old image file is not included in the new image files, delete it
+          if (!newImageFiles.includes(oldImageFile)) {
+            console.log(
+              "Deleting image file that does not included:",
+              oldImageFile
+            );
+            await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
+              oldImageFile
+            );
+            contribution.images = contribution.images.filter(
+              (image) => image.split("/").pop() !== oldImageFile
+            );
+          }
+        }
+
+        // If the new image file is not included in the old image files, upload it
+        // But if the new image file is included in the old image files, do nothing
+        for (const imageFile of files["image"]) {
+          if (
+            !oldImageFiles
+              .map((name) => name.toLowerCase())
+              .includes(imageFile.originalname.toLowerCase())
+          ) {
+            console.log("Uploading new image file:", imageFile.originalname);
+            const imageName =
+              await cloudinaryService.uploadContributionImageToCloudinary(
+                imageFile.buffer,
+                imageFile.originalname
+              );
+            contribution.images.push(imageName);
+          }
+        }
       }
+
+      // Update contribution images and documents not to contain any duplicated items
+      contribution.images = contribution.images.filter((image, index, self) => {
+        const filename = getFilename(image);
+        const firstIndex = self.findIndex(
+          (img) => getFilename(img) === filename
+        );
+        return firstIndex === index;
+      });
+
+      contribution.documents = contribution.documents.filter(
+        (document, index, self) => {
+          const filename = getFilename(document);
+          const firstIndex = self.findIndex(
+            (doc) => getFilename(doc) === filename
+          );
+          return firstIndex === index;
+        }
+      );
 
       return await contribution.save();
     } catch (error) {
@@ -505,13 +685,12 @@ const contributionService = {
         const contributionInfo = {
           id: contributions[i]._id,
           title: contributions[i].title,
-          content: contributions[i].content,
           status: contributions[i].status,
           submitter: submitter.email,
           event: event.name,
           faculty: faculty.name,
-          image: contributions[i].image,
-          document: contributions[i].document,
+          images: contributions[i].images,
+          documents: contributions[i].documents,
           state: contributions[i].state,
         };
         contributionInfos.push(contributionInfo);

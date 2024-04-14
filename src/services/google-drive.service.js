@@ -81,10 +81,32 @@ async function deleteFileFromGoogleDrive(authClient, fileName) {
   }
 }
 
+async function checkIfDocumentFileExists(authClient, fileName) {
+  try {
+    if (!authClient) {
+      throw new Error("Auth client is required");
+    }
+    const drive = google.drive({ version: "v3", auth: authClient });
+
+    const file = await drive.files.list({
+      q: `name = '${fileName}'`,
+    });
+
+    if (file.data.files.length === 0) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    throw error;
+  }
+}
+
 const googleDriveService = {
   authorizeGoogleDrive,
   uploadFileToGoogleDrive,
   deleteFileFromGoogleDrive,
+  checkIfDocumentFileExists,
 };
 
 module.exports = googleDriveService;

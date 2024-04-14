@@ -14,7 +14,7 @@ module.exports = function (app) {
   });
 
   app.get(
-    "/api/contribution-management/contribution/download/:documentName",
+    "/api/contribution-management/contribution/download",
     [authJwt.verifyToken],
     controller.fetchFileThenReturnToBrowser
   );
@@ -34,20 +34,14 @@ module.exports = function (app) {
   app.post(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isAdmin],
-    upload.fields([
-      { name: "image", maxCount: 1 },
-      { name: "document", maxCount: 1 },
-    ]),
+    upload.fields([{ name: "image" }, { name: "document" }]),
     controller.createContribution
   );
 
   app.put(
     "/api/contribution-management/contribution",
     [authJwt.verifyToken, authJwt.isAdmin],
-    upload.fields([
-      { name: "image", maxCount: 1 },
-      { name: "document", maxCount: 1 },
-    ]),
+    upload.fields([{ name: "image" }, { name: "document" }]),
     controller.updateContribution
   );
 
@@ -67,20 +61,14 @@ module.exports = function (app) {
   app.post(
     "/api/contribution-management/student/contribution",
     [authJwt.verifyToken, authJwt.isStudent],
-    upload.fields([
-      { name: "image", maxCount: 1 },
-      { name: "document", maxCount: 1 },
-    ]),
+    upload.fields([{ name: "image" }, { name: "document" }]),
     controller.createContributionForStudent
   );
 
   app.put(
     "/api/contribution-management/student/contribution",
     [authJwt.verifyToken, authJwt.isStudent],
-    upload.fields([
-      { name: "image", maxCount: 1 },
-      { name: "document", maxCount: 1 },
-    ]),
+    upload.fields([{ name: "image" }, { name: "document" }]),
     controller.updateContributionForStudent
   );
 

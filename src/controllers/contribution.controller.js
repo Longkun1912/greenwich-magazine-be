@@ -1,12 +1,13 @@
 const contributionService = require("../services/contribution.service");
 const { google } = require("googleapis");
 const googleDriveService = require("../services/google-drive.service");
+const cloudinaryService = require("../services/cloudinary.service");
 
 exports.fetchFileThenReturnToBrowser = async (req, res) => {
   try {
     const authClient = await googleDriveService.authorizeGoogleDrive();
     const drive = google.drive({ version: "v3", auth: authClient });
-    const fileName = req.params.documentName;
+    const fileName = req.query.document;
 
     const file = await drive.files.list({
       q: `name = '${fileName}'`,
@@ -110,6 +111,7 @@ exports.createContributionForStudent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.updateContributionForStudent = async (req, res) => {
   try {
     const result = await contributionService.updateContributionForStudent(
