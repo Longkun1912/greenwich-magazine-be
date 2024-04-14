@@ -1,5 +1,4 @@
 const Contribution = require("../models/contribution");
-const cloudinaryService = require("../services/cloudinary.service");
 const googleDriveService = require("../services/google-drive.service");
 const Event = require("../models/event");
 const User = require("../models/user");
@@ -40,7 +39,6 @@ const contributionService = {
         // Check if the document file already exists in Google Drive
         for (const documentFile of files["document"]) {
           const documentName = documentFile.originalname;
-          console.log("Checking if document exists:", documentName);
           const documentExists =
             await googleDriveService.checkIfDocumentFileExists(
               authClient,
@@ -60,11 +58,11 @@ const contributionService = {
       if (files["image"]) {
         // Check if the image file already exists in Cloudinary
         for (const imageFile of files["image"]) {
-          const imageName = imageFile.originalname.split(".").shift();
-
-          console.log("Checking if image exists:", imageName);
-          const imageExists =
-            await cloudinaryService.checkIfContributionImageExists(imageName);
+          const imageName = imageFile.originalname;
+          const imageExists = await googleDriveService.checkIfImageFileExists(
+            authClient,
+            imageName
+          );
           if (imageExists === true) {
             throw new Error("Image file name " + imageName + " already exists");
           }
@@ -75,20 +73,20 @@ const contributionService = {
 
       // Handle uploading document files
       for (const documentFile of files["document"]) {
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
-        );
+        const documentName =
+          await googleDriveService.uploadDocumentFileToGoogleDrive(
+            authClient,
+            documentFile
+          );
         contribution.documents.push(documentName);
       }
 
       // Handle uploading image files
       for (const imageFile of files["image"]) {
-        const imageName =
-          await cloudinaryService.uploadContributionImageToCloudinary(
-            imageFile.buffer,
-            imageFile.originalname
-          );
+        const imageName = await googleDriveService.uploadImageFileToGoogleDrive(
+          authClient,
+          imageFile
+        );
         contribution.images.push(imageName);
       }
 
@@ -169,14 +167,57 @@ const contributionService = {
         }
       }
 
+      const authClient = await googleDriveService.authorizeGoogleDrive();
+
+      // Check in drive for duplicated document files but exclude the old document files
+      if (files["document"]) {
+        for (const documentFile of files["document"]) {
+          const documentName = documentFile.originalname;
+          const documentExists =
+            await googleDriveService.checkIfDocumentFileExists(
+              authClient,
+              documentName
+            );
+          if (documentExists === true) {
+            if (
+              !contribution.documents
+                .map((name) => name.toLowerCase())
+                .includes(documentName.toLowerCase())
+            ) {
+              throw new Error(
+                "Document file name " + documentName + " already exists"
+              );
+            }
+          }
+        }
+      }
+
+      // Check in drive for duplicated image files but exclude the old image files
+      if (files["image"]) {
+        for (const imageFile of files["image"]) {
+          const imageName = imageFile.originalname;
+          const imageExists = await googleDriveService.checkIfImageFileExists(
+            authClient,
+            imageName
+          );
+          if (imageExists === true) {
+            if (
+              !contribution.images
+                .map((name) => name.toLowerCase())
+                .includes(imageName.toLowerCase())
+            ) {
+              throw new Error(
+                "Image file name " + imageName + " already exists"
+              );
+            }
+          }
+        }
+      }
+
       // Handle document files
       if (files["document"]) {
-        const authClient = await googleDriveService.authorizeGoogleDrive();
-
         // Compare the new document files with the old ones, check if there are any files that need to be deleted
-        const oldDocumentFileNames = contribution.documents.map((document) =>
-          document.split("/").pop()
-        );
+        const oldDocumentFileNames = contribution.documents;
 
         const newDocumentFileNames = files["document"].map(
           (file) => file.originalname
@@ -193,7 +234,7 @@ const contributionService = {
               "Deleting document file that does not included:",
               oldDocumentFileName
             );
-            await googleDriveService.deleteFileFromGoogleDrive(
+            await googleDriveService.deleteDocumentFileFromGoogleDrive(
               authClient,
               oldDocumentFileName
             );
@@ -216,7 +257,7 @@ const contributionService = {
               documentFile.originalname
             );
             const documentName =
-              await googleDriveService.uploadFileToGoogleDrive(
+              await googleDriveService.uploadDocumentFileToGoogleDrive(
                 authClient,
                 documentFile
               );
@@ -228,13 +269,9 @@ const contributionService = {
       // Handle image files
       if (files["image"]) {
         // Compare the new image files with the old ones, check if there are any files that need to be deleted
-        const oldImageFiles = contribution.images.map((image) =>
-          decodeURIComponent(image.split("/").pop())
-        );
+        const oldImageFiles = contribution.images;
 
-        const newImageFiles = files["image"].map((file) =>
-          file.originalname.split("/").pop()
-        );
+        const newImageFiles = files["image"].map((file) => file.originalname);
 
         // Console.log the old and new image file names
         console.log("Old image file names:", oldImageFiles);
@@ -247,14 +284,13 @@ const contributionService = {
               "Deleting image file that does not included:",
               oldImageFile
             );
-            await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
+            await googleDriveService.deleteImageFileFromGoogleDrive(
+              authClient,
               oldImageFile
             );
-
             // Filter out the deleted image file
             contribution.images = contribution.images.filter(
-              (image) =>
-                decodeURIComponent(image.split("/").pop()) !== oldImageFile
+              (image) => image !== oldImageFile
             );
           }
         }
@@ -269,33 +305,14 @@ const contributionService = {
           ) {
             console.log("Uploading new image file:", imageFile.originalname);
             const imageName =
-              await cloudinaryService.uploadContributionImageToCloudinary(
-                imageFile.buffer,
-                imageFile.originalname
+              await googleDriveService.uploadImageFileToGoogleDrive(
+                authClient,
+                imageFile
               );
             contribution.images.push(imageName);
           }
         }
       }
-
-      // Update contribution images and documents not to contain any duplicated items
-      contribution.images = contribution.images.filter((image, index, self) => {
-        const filename = getFilename(image);
-        const firstIndex = self.findIndex(
-          (img) => getFilename(img) === filename
-        );
-        return firstIndex === index;
-      });
-
-      contribution.documents = contribution.documents.filter(
-        (document, index, self) => {
-          const filename = getFilename(document);
-          const firstIndex = self.findIndex(
-            (doc) => getFilename(doc) === filename
-          );
-          return firstIndex === index;
-        }
-      );
 
       return await contribution.save();
     } catch (error) {
@@ -417,7 +434,6 @@ const contributionService = {
         // Check if the document file already exists in Google Drive
         for (const documentFile of files["document"]) {
           const documentName = documentFile.originalname;
-          console.log("Checking if document exists:", documentName);
           const documentExists =
             await googleDriveService.checkIfDocumentFileExists(
               authClient,
@@ -437,11 +453,11 @@ const contributionService = {
       if (files["image"]) {
         // Check if the image file already exists in Cloudinary
         for (const imageFile of files["image"]) {
-          const imageName = imageFile.originalname.split(".").shift();
-
-          console.log("Checking if image exists:", imageName);
-          const imageExists =
-            await cloudinaryService.checkIfContributionImageExists(imageName);
+          const imageName = imageFile.originalname;
+          const imageExists = await googleDriveService.checkIfImageFileExists(
+            authClient,
+            imageName
+          );
           if (imageExists === true) {
             throw new Error("Image file name " + imageName + " already exists");
           }
@@ -452,20 +468,20 @@ const contributionService = {
 
       // Handle uploading document files
       for (const documentFile of files["document"]) {
-        const documentName = await googleDriveService.uploadFileToGoogleDrive(
-          authClient,
-          documentFile
-        );
+        const documentName =
+          await googleDriveService.uploadDocumentFileToGoogleDrive(
+            authClient,
+            documentFile
+          );
         contribution.documents.push(documentName);
       }
 
       // Handle uploading image files
       for (const imageFile of files["image"]) {
-        const imageName =
-          await cloudinaryService.uploadContributionImageToCloudinary(
-            imageFile.buffer,
-            imageFile.originalname
-          );
+        const imageName = await googleDriveService.uploadImageFileToGoogleDrive(
+          authClient,
+          imageFile
+        );
         contribution.images.push(imageName);
       }
 
@@ -555,14 +571,57 @@ const contributionService = {
       }
       contribution.title = contributionForm.title;
 
+      const authClient = await googleDriveService.authorizeGoogleDrive();
+
+      // Check in drive for duplicated document files but exclude the old document files
+      if (files["document"]) {
+        for (const documentFile of files["document"]) {
+          const documentName = documentFile.originalname;
+          const documentExists =
+            await googleDriveService.checkIfDocumentFileExists(
+              authClient,
+              documentName
+            );
+          if (documentExists === true) {
+            if (
+              !contribution.documents
+                .map((name) => name.toLowerCase())
+                .includes(documentName.toLowerCase())
+            ) {
+              throw new Error(
+                "Document file name " + documentName + " already exists"
+              );
+            }
+          }
+        }
+      }
+
+      // Check in drive for duplicated image files but exclude the old image files
+      if (files["image"]) {
+        for (const imageFile of files["image"]) {
+          const imageName = imageFile.originalname;
+          const imageExists = await googleDriveService.checkIfImageFileExists(
+            authClient,
+            imageName
+          );
+          if (imageExists === true) {
+            if (
+              !contribution.images
+                .map((name) => name.toLowerCase())
+                .includes(imageName.toLowerCase())
+            ) {
+              throw new Error(
+                "Image file name " + imageName + " already exists"
+              );
+            }
+          }
+        }
+      }
+
       // Handle document files
       if (files["document"]) {
-        const authClient = await googleDriveService.authorizeGoogleDrive();
-
         // Compare the new document files with the old ones, check if there are any files that need to be deleted
-        const oldDocumentFileNames = contribution.documents.map((document) =>
-          document.split("/").pop()
-        );
+        const oldDocumentFileNames = contribution.documents;
 
         const newDocumentFileNames = files["document"].map(
           (file) => file.originalname
@@ -579,7 +638,7 @@ const contributionService = {
               "Deleting document file that does not included:",
               oldDocumentFileName
             );
-            await googleDriveService.deleteFileFromGoogleDrive(
+            await googleDriveService.deleteDocumentFileFromGoogleDrive(
               authClient,
               oldDocumentFileName
             );
@@ -602,7 +661,7 @@ const contributionService = {
               documentFile.originalname
             );
             const documentName =
-              await googleDriveService.uploadFileToGoogleDrive(
+              await googleDriveService.uploadDocumentFileToGoogleDrive(
                 authClient,
                 documentFile
               );
@@ -614,13 +673,9 @@ const contributionService = {
       // Handle image files
       if (files["image"]) {
         // Compare the new image files with the old ones, check if there are any files that need to be deleted
-        const oldImageFiles = contribution.images.map((image) =>
-          decodeURIComponent(image.split("/").pop())
-        );
+        const oldImageFiles = contribution.images;
 
-        const newImageFiles = files["image"].map((file) =>
-          file.originalname.split("/").pop()
-        );
+        const newImageFiles = files["image"].map((file) => file.originalname);
 
         // Console.log the old and new image file names
         console.log("Old image file names:", oldImageFiles);
@@ -633,13 +688,13 @@ const contributionService = {
               "Deleting image file that does not included:",
               oldImageFile
             );
-            await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
+            await googleDriveService.deleteImageFileFromGoogleDrive(
+              authClient,
               oldImageFile
             );
             // Filter out the deleted image file
             contribution.images = contribution.images.filter(
-              (image) =>
-                decodeURIComponent(image.split("/").pop()) !== oldImageFile
+              (image) => image !== oldImageFile
             );
           }
         }
@@ -654,33 +709,14 @@ const contributionService = {
           ) {
             console.log("Uploading new image file:", imageFile.originalname);
             const imageName =
-              await cloudinaryService.uploadContributionImageToCloudinary(
-                imageFile.buffer,
-                imageFile.originalname
+              await googleDriveService.uploadImageFileToGoogleDrive(
+                authClient,
+                imageFile
               );
             contribution.images.push(imageName);
           }
         }
       }
-
-      // Update contribution images and documents not to contain any duplicated items
-      contribution.images = contribution.images.filter((image, index, self) => {
-        const filename = getFilename(image);
-        const firstIndex = self.findIndex(
-          (img) => getFilename(img) === filename
-        );
-        return firstIndex === index;
-      });
-
-      contribution.documents = contribution.documents.filter(
-        (document, index, self) => {
-          const filename = getFilename(document);
-          const firstIndex = self.findIndex(
-            (doc) => getFilename(doc) === filename
-          );
-          return firstIndex === index;
-        }
-      );
 
       return await contribution.save();
     } catch (error) {

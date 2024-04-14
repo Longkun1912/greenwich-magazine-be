@@ -16,7 +16,7 @@ module.exports = function (app) {
   app.get(
     "/api/contribution-management/contribution/download",
     [authJwt.verifyToken],
-    controller.fetchFileThenReturnToBrowser
+    controller.fetchFilesThenReturnToBrowser
   );
 
   app.get(

@@ -1,42 +1,56 @@
 const contributionService = require("../services/contribution.service");
 const { google } = require("googleapis");
 const googleDriveService = require("../services/google-drive.service");
-const cloudinaryService = require("../services/cloudinary.service");
+const JSZip = require("jszip");
 
-exports.fetchFileThenReturnToBrowser = async (req, res) => {
+exports.fetchFilesThenReturnToBrowser = async (req, res) => {
   try {
     const authClient = await googleDriveService.authorizeGoogleDrive();
-    const drive = google.drive({ version: "v3", auth: authClient });
-    const fileName = req.query.document;
 
-    const file = await drive.files.list({
-      q: `name = '${fileName}'`,
-    });
+    const documents = req.query.documents ? req.query.documents : [];
+    const images = req.query.images ? req.query.images : [];
 
-    if (file.data.files.length === 0) {
-      res.status(404).json({ error: "File not found" });
+    const allFiles = [];
+    const zip = new JSZip();
+
+    // Fetch documents concurrently
+    for (const document of documents) {
+      try {
+        const fileStream =
+          await googleDriveService.fetchDocumentFileFromGoogleDrive(
+            authClient,
+            document
+          );
+        zip.file(document, fileStream, { stream: true });
+      } catch (error) {
+        console.error(`Error fetching document ${document}:`, error);
+      }
     }
 
-    const existedFile = file.data.files[0];
-    // Return the file to the client
-    drive.files.get(
-      { fileId: existedFile.id, alt: "media" },
-      { responseType: "stream" },
-      function (err, response) {
-        if (err) {
-          console.log("The API returned an error: " + err);
-          return;
-        }
-        res.setHeader("Content-Type", existedFile.mimeType);
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=" + existedFile.name
-        );
-        response.data.pipe(res);
+    // Fetch images concurrently
+    for (const image of images) {
+      try {
+        const fileStream =
+          await googleDriveService.fetchImageFileFromGoogleDrive(
+            authClient,
+            image
+          );
+        zip.file(image, fileStream, { stream: true });
+      } catch (error) {
+        console.error(`Error fetching image ${image}:`, error);
       }
-    );
+    }
+
+    if (allFiles.length === 0) {
+      return res.status(404).json({ error: "No files found" });
+    }
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-disposition", "attachment; filename=files.zip");
+    zip.generateNodeStream({ type: "stream" }).pipe(res); // Stream zip to response
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching files:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

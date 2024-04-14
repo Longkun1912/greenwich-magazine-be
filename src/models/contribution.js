@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-const cloudinaryService = require("../services/cloudinary.service");
 const googleDriveService = require("../services/google-drive.service");
 const Comment = require("./comment");
 
@@ -55,16 +54,20 @@ contributionSchema.pre(
   { document: true, query: false },
   async function (next) {
     try {
+      const authClient = await googleDriveService.authorizeGoogleDrive();
       // Delete contribution image and document
       console.log("Deleting contribution image...");
       for (const image of this.images) {
-        await cloudinaryService.deleteContributionImageFromCloudinary(image);
+        await googleDriveService.deleteImageFileFromGoogleDrive(
+          authClient,
+          image
+        );
       }
       console.log("Deleted contribution image successfully.");
       console.log("Deleting contribution document...");
-      const authClient = await googleDriveService.authorizeGoogleDrive();
+
       for (const document of this.documents) {
-        await googleDriveService.deleteFileFromGoogleDrive(
+        await googleDriveService.deleteDocumentFileFromGoogleDrive(
           authClient,
           document
         );
