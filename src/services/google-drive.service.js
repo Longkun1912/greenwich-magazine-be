@@ -89,14 +89,16 @@ async function checkIfDocumentFileExists(authClient, fileName) {
     const drive = google.drive({ version: "v3", auth: authClient });
 
     const file = await drive.files.list({
-      q: `name = '${fileName}'`,
+      q: `name = '${fileName}' and '${documentFolderId}' in parents`,
     });
 
     if (file.data.files.length === 0) {
+      console.log("File is not found");
       return false;
+    } else {
+      console.log("File is found");
+      return true;
     }
-
-    return true;
   } catch (error) {
     throw error;
   }

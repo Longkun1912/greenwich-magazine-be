@@ -196,6 +196,8 @@ const checkIfContributionImageExists = async (title) => {
     }
 
     const folderPath = "greenwich-magazine/contributions/images";
+    console.log("PublicId: " + folderPath + "/" + title);
+
     const result = await cloudinary.search
       .expression(`public_id:${folderPath}/${title}`)
       .execute();

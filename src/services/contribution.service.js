@@ -34,28 +34,62 @@ const contributionService = {
         faculty: contributionForm.faculty,
       });
 
-      // Handle document files
+      // Handle checking document files
+      const authClient = await googleDriveService.authorizeGoogleDrive();
       if (files["document"]) {
-        const authClient = await googleDriveService.authorizeGoogleDrive();
+        // Check if the document file already exists in Google Drive
         for (const documentFile of files["document"]) {
-          const documentName = await googleDriveService.uploadFileToGoogleDrive(
-            authClient,
-            documentFile
-          );
-          contribution.documents.push(documentName);
+          const documentName = documentFile.originalname;
+          console.log("Checking if document exists:", documentName);
+          const documentExists =
+            await googleDriveService.checkIfDocumentFileExists(
+              authClient,
+              documentName
+            );
+          if (documentExists === true) {
+            throw new Error(
+              "Document file name " + documentName + " already exists"
+            );
+          }
         }
+      } else {
+        throw new Error("You must upload at least one document");
       }
 
-      // Handle image files
+      // Handle checking image files
       if (files["image"]) {
+        // Check if the image file already exists in Cloudinary
         for (const imageFile of files["image"]) {
-          const imageName =
-            await cloudinaryService.uploadContributionImageToCloudinary(
-              imageFile.buffer,
-              imageFile.originalname
-            );
-          contribution.images.push(imageName);
+          const imageName = imageFile.originalname.split(".").shift();
+
+          console.log("Checking if image exists:", imageName);
+          const imageExists =
+            await cloudinaryService.checkIfContributionImageExists(imageName);
+          if (imageExists === true) {
+            throw new Error("Image file name " + imageName + " already exists");
+          }
         }
+      } else {
+        throw new Error("You must upload at least one image");
+      }
+
+      // Handle uploading document files
+      for (const documentFile of files["document"]) {
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        contribution.documents.push(documentName);
+      }
+
+      // Handle uploading image files
+      for (const imageFile of files["image"]) {
+        const imageName =
+          await cloudinaryService.uploadContributionImageToCloudinary(
+            imageFile.buffer,
+            imageFile.originalname
+          );
+        contribution.images.push(imageName);
       }
 
       const createdContribution = await contribution.save();
@@ -216,8 +250,11 @@ const contributionService = {
             await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
               oldImageFile
             );
+
+            // Filter out the deleted image file
             contribution.images = contribution.images.filter(
-              (image) => image.split("/").pop() !== oldImageFile
+              (image) =>
+                decodeURIComponent(image.split("/").pop()) !== oldImageFile
             );
           }
         }
@@ -374,28 +411,62 @@ const contributionService = {
         state: contributionForm.state || "private",
       });
 
-      // Handle document files
+      // Handle checking document files
+      const authClient = await googleDriveService.authorizeGoogleDrive();
       if (files["document"]) {
-        const authClient = await googleDriveService.authorizeGoogleDrive();
+        // Check if the document file already exists in Google Drive
         for (const documentFile of files["document"]) {
-          const documentName = await googleDriveService.uploadFileToGoogleDrive(
-            authClient,
-            documentFile
-          );
-          contribution.documents.push(documentName);
+          const documentName = documentFile.originalname;
+          console.log("Checking if document exists:", documentName);
+          const documentExists =
+            await googleDriveService.checkIfDocumentFileExists(
+              authClient,
+              documentName
+            );
+          if (documentExists === true) {
+            throw new Error(
+              "Document file name " + documentName + " already exists"
+            );
+          }
         }
+      } else {
+        throw new Error("You must upload at least one document");
       }
 
-      // Handle image files
+      // Handle checking image files
       if (files["image"]) {
+        // Check if the image file already exists in Cloudinary
         for (const imageFile of files["image"]) {
-          const imageName =
-            await cloudinaryService.uploadContributionImageToCloudinary(
-              imageFile.buffer,
-              imageFile.originalname
-            );
-          contribution.images.push(imageName);
+          const imageName = imageFile.originalname.split(".").shift();
+
+          console.log("Checking if image exists:", imageName);
+          const imageExists =
+            await cloudinaryService.checkIfContributionImageExists(imageName);
+          if (imageExists === true) {
+            throw new Error("Image file name " + imageName + " already exists");
+          }
         }
+      } else {
+        throw new Error("You must upload at least one image");
+      }
+
+      // Handle uploading document files
+      for (const documentFile of files["document"]) {
+        const documentName = await googleDriveService.uploadFileToGoogleDrive(
+          authClient,
+          documentFile
+        );
+        contribution.documents.push(documentName);
+      }
+
+      // Handle uploading image files
+      for (const imageFile of files["image"]) {
+        const imageName =
+          await cloudinaryService.uploadContributionImageToCloudinary(
+            imageFile.buffer,
+            imageFile.originalname
+          );
+        contribution.images.push(imageName);
       }
 
       const createdContribution = await contribution.save();
@@ -565,8 +636,10 @@ const contributionService = {
             await cloudinaryService.removeContributionImageFromCloudinaryByTitle(
               oldImageFile
             );
+            // Filter out the deleted image file
             contribution.images = contribution.images.filter(
-              (image) => image.split("/").pop() !== oldImageFile
+              (image) =>
+                decodeURIComponent(image.split("/").pop()) !== oldImageFile
             );
           }
         }
