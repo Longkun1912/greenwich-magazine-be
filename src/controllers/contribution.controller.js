@@ -2,16 +2,18 @@ const contributionService = require("../services/contribution.service");
 const { google } = require("googleapis");
 const googleDriveService = require("../services/google-drive.service");
 const JSZip = require("jszip");
+const { promisify } = require("util");
+const stream = require("stream");
+const pipeline = promisify(stream.pipeline);
 
 exports.fetchFilesThenReturnToBrowser = async (req, res) => {
   try {
     const authClient = await googleDriveService.authorizeGoogleDrive();
-
     const documents = req.query.documents ? req.query.documents : [];
     const images = req.query.images ? req.query.images : [];
 
-    const allFiles = [];
     const zip = new JSZip();
+    let totalSize = 0;
 
     // Fetch documents concurrently
     for (const document of documents) {
@@ -21,7 +23,13 @@ exports.fetchFilesThenReturnToBrowser = async (req, res) => {
             authClient,
             document
           );
-        zip.file(document, fileStream, { stream: true });
+        const chunks = [];
+        for await (const chunk of fileStream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        zip.file(document, buffer);
+        totalSize += buffer.length; // Calculate total size of zip folder
       } catch (error) {
         console.error(`Error fetching document ${document}:`, error);
       }
@@ -35,19 +43,24 @@ exports.fetchFilesThenReturnToBrowser = async (req, res) => {
             authClient,
             image
           );
-        zip.file(image, fileStream, { stream: true });
+        const chunks = [];
+        for await (const chunk of fileStream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        zip.file(image, buffer);
+        totalSize += buffer.length; // Calculate total size of zip folder
       } catch (error) {
         console.error(`Error fetching image ${image}:`, error);
       }
     }
 
-    if (allFiles.length === 0) {
-      return res.status(404).json({ error: "No files found" });
-    }
-
     res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-disposition", "attachment; filename=files.zip");
-    zip.generateNodeStream({ type: "stream" }).pipe(res); // Stream zip to response
+    res.setHeader(
+      "Content-disposition",
+      "attachment; filename=" + "contribution.zip"
+    );
+    zip.generateNodeStream().pipe(res); // Stream zip to response
   } catch (error) {
     console.error("Error fetching files:", error);
     res.status(500).json({ error: "Internal server error" });

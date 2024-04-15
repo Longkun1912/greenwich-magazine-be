@@ -123,8 +123,11 @@ async function fetchFileFromGoogleDrive(authClient, fileName, folderId) {
   const file = response.data.files[0];
   const fileId = file.id;
 
-  const downloadStream = await drive.files.get({ fileId, alt: "media" });
-  return downloadStream;
+  const fileStream = await drive.files.get(
+    { fileId, alt: "media" },
+    { responseType: "stream" }
+  );
+  return fileStream.data;
 }
 
 async function fetchDocumentFileFromGoogleDrive(authClient, fileName) {
