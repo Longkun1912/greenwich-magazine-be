@@ -570,9 +570,8 @@ const contributionService = {
         }
       }
       contribution.title = contributionForm.title;
-
+      contribution.status = "pending";
       const authClient = await googleDriveService.authorizeGoogleDrive();
-
       // Check in drive for duplicated document files but exclude the old document files
       if (files["document"]) {
         for (const documentFile of files["document"]) {
