@@ -9,10 +9,6 @@ const sendEmail = require("../utils/sendEmail");
 const fs = require("fs");
 const path = require("path");
 
-const getFilename = (url) => {
-  return decodeURIComponent(url.split("/").pop());
-};
-
 const contributionService = {
   async createContribution(contributionForm, files) {
     try {
@@ -150,20 +146,22 @@ const contributionService = {
       contribution.status = contributionForm.status || "pending";
 
       if (contributionForm.event) {
-        const event = await Event.findById(contributionForm.event);
+        const event = await Event.findOne({ name: contributionForm.event });
         if (!event) {
           throw new Error("Event not found");
         } else {
-          contribution.event = contributionForm.event;
+          contribution.event = event._id;
         }
       }
 
       if (contributionForm.faculty) {
-        const faculty = await Faculty.findById(contributionForm.faculty);
+        const faculty = await Faculty.findOne({
+          name: contributionForm.faculty,
+        });
         if (!faculty) {
           throw new Error("Faculty not found");
         } else {
-          contribution.faculty = contributionForm.faculty;
+          contribution.faculty = faculty._id;
         }
       }
 
@@ -556,7 +554,7 @@ const contributionService = {
       if (!contributionForm.event) {
         event = await Event.findById(contribution.event);
       } else {
-        event = await Event.findById(contributionForm.event);
+        event = await Event.findOne({ name: contributionForm.event });
       }
 
       const currentDate = new Date();
@@ -566,7 +564,7 @@ const contributionService = {
             "Contribution cannot be updated after the final deadline"
           );
         } else {
-          contribution.event = contributionForm.event;
+          contribution.event = event._id;
         }
       }
       contribution.title = contributionForm.title;

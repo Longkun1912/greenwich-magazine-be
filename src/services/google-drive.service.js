@@ -5,8 +5,6 @@ const { google } = require("googleapis");
 const DOCUMENT_FOLDER_ID = "1ota1dquXIu0boWQV_dW_dkQuvvfPpNfr";
 const IMAGE_FOLDER_ID = "1cgXL1TRX3cV4eHRjCOj_x9LWg9ii_Q_q";
 
-const VALID_FILENAME_REGEX = /^[a-zA-Z0-9\s\-\_\.\/]+$/;
-
 async function authorizeGoogleDrive() {
   const authClient = await googleDriveConfig();
   return authClient;
@@ -20,9 +18,11 @@ async function uploadFileToGoogleDrive(authClient, file, folderId) {
     throw new Error("File is required");
   }
 
-  if (!VALID_FILENAME_REGEX.test(file.originalname)) {
+  // File name can only contains English letters, numbers, and symbols
+  const fileName = file.originalname;
+  if (!/^[a-zA-Z0-9-_. ]+$/.test(fileName)) {
     throw new Error(
-      "File name can only contain letters, numbers, spaces, and these characters: - _ . /"
+      "File name can only contains English letters, numbers, and symbols"
     );
   }
 
